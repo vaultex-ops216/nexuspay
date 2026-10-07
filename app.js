@@ -1,689 +1,411 @@
 /**
- * ============================================================================
- * NEXUSPAY PLATFORM - COMPLETE OPERATIONAL MASTER ENGINE
- * Full Real-Time State: Balance Adjuster, Deposit & Withdrawal Verifier, 
- * Package/Pricing Manager, and PTC Ad Engine
- * ============================================================================
+ * NEXUSPAY ROCK-SOLID OPERATIONAL ENGINE
  */
 
-// Master Security Keys
-const MASTER_ADMIN_PIN = "778899";
-const MASTER_ADMIN_KEY = "admin_secure_key";
-
-// Local Gateways Data
 const GATEWAYS = {
-  jazzcash: { title: "JazzCash (Pakistan)", account: "0300-1234567", name: "NexusPay Direct" },
-  easypaisa: { title: "Easypaisa (Pakistan)", account: "0345-7654321", name: "NexusPay Escrow" },
-  usdt: { title: "USDT (TRC-20 Network)", account: "TXn92KsmLK3B91Yhd912Nsd19XzLKqwert", name: "Binance/Tron Escrow" }
+  jazzcash: { title: "JazzCash Pakistan", account: "0300-1234567", name: "Nexus Direct" },
+  easypaisa: { title: "Easypaisa Pakistan", account: "0345-7654321", name: "Nexus Escrow" },
+  usdt: { title: "USDT (TRC-20)", account: "TXn92KsmLK3B91Yhd912Nsd19XzLKqwert", name: "Tron Treasury" }
 };
 
-// Storage Utilities
-function getStorage(key, defaultVal) {
-  const data = localStorage.getItem("nexus_" + key);
-  return data ? JSON.parse(data) : defaultVal;
-}
-function saveStorage(key, val) {
-  localStorage.setItem("nexus_" + key, JSON.stringify(val));
-}
+// Global Store
+let packages = [
+  { id: "free", name: "Free Tier", price: 0, dailyAds: 5, reward: 0.02 },
+  { id: "silver", name: "Silver VIP", price: 20, dailyAds: 15, reward: 0.05 },
+  { id: "gold", name: "Gold VIP", price: 50, dailyAds: 30, reward: 0.10 }
+];
 
-// 1. Packages State (Editable by Admin)
-let packagesList = getStorage("packages", [
-  { id: "free", name: "Free Tier", price: 0, dailyAds: 5, rewardPerAd: 0.02, roi: "Standard" },
-  { id: "silver", name: "Silver VIP", price: 20, dailyAds: 15, rewardPerAd: 0.05, roi: "120% / Mo" },
-  { id: "gold", name: "Gold VIP", price: 50, dailyAds: 30, rewardPerAd: 0.10, roi: "150% / Mo" },
-  { id: "platinum", name: "Platinum Elite", price: 100, dailyAds: 60, rewardPerAd: 0.20, roi: "200% / Mo" }
-]);
+let users = [
+  { email: "investor@gmail.com", balance: 10.00, totalDeposit: 0.0, totalWithdraw: 0.0, clicks: 0, package: "free", status: "active" },
+  { email: "admin@nexus.io", balance: 500.00, totalDeposit: 1000.0, totalWithdraw: 0.0, clicks: 0, package: "gold", status: "active" }
+];
 
-// 2. Users State
-let currentUser = getStorage("current_user", {
-  email: "investor@gmail.com",
-  balance: 10.00,
-  totalDeposit: 0.00,
-  totalWithdraw: 0.00,
-  clicksToday: 0,
-  package: "free",
-  role: "user",
-  status: "active"
-});
+let currentUser = users[0];
 
-let allUsers = getStorage("all_users", [
-  currentUser,
-  { email: "admin@nexus.io", balance: 500.00, totalDeposit: 1000.00, totalWithdraw: 50.00, clicksToday: 0, package: "platinum", role: "admin", status: "active" },
-  { email: "user2@mail.com", balance: 14.50, totalDeposit: 20.00, totalWithdraw: 0.00, clicksToday: 3, package: "silver", role: "user", status: "active" }
-]);
+let ads = [
+  { id: 1, title: "Binance Staking Reward", reward: 0.05, duration: 6 },
+  { id: 2, title: "Bybit Launchpool Offer", reward: 0.08, duration: 8 },
+  { id: 3, title: "Web3 Crypto Nodes", reward: 0.12, duration: 10 }
+];
 
-// 3. PTC Ads State
-let allAds = getStorage("all_ads", [
-  { id: "ad_1", title: "Binance Crypto Staking", duration: 8, reward: 0.05, url: "https://binance.com", active: true },
-  { id: "ad_2", title: "Bybit High Yield Earn", duration: 10, reward: 0.08, url: "https://bybit.com", active: true },
-  { id: "ad_3", title: "Web3 Decentralized Yield Farms", duration: 12, reward: 0.12, url: "https://ethereum.org", active: true }
-]);
+let txList = [];
 
-// 4. Transactions Ledger (Deposits & Withdrawals)
-let transactions = getStorage("transactions", [
-  { id: "TX-101", user: "investor@gmail.com", type: "deposit", method: "JazzCash", tid: "JC-987211", amount: 20.00, status: "approved", date: "2026-10-06" }
-]);
+// Watch Ad State
+let activeAd = null;
+let timerObj = null;
+let mathResult = 0;
+let editEmail = "";
 
-// State variables for ad timer
-let watchingAd = null;
-let adTimerInterval = null;
-let captchaCorrect = 0;
-let secretTapCount = 0;
-
-// ============================================================================
-// INITIALIZATION
-// ============================================================================
+// Init
 window.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("currentYear").textContent = new Date().getFullYear();
-
-  // Check URL Parameter for Admin (?access=admin_secure_key)
-  const params = new URLSearchParams(window.location.search);
-  if (params.get("access") === MASTER_ADMIN_KEY || params.get("view") === "admin") {
-    unlockAdminView("Admin Mode Active via URL Key");
+  // Check admin url
+  const p = new URLSearchParams(window.location.search);
+  if (p.get("access") === "admin_secure_key" || p.get("view") === "admin") {
+    goView("admin");
   } else {
-    switchView("dashboard");
+    goView("dashboard");
   }
 
-  setupShortcuts();
-  updateUI();
-  renderPTCAds();
-  renderPackages();
-  renderTransactionHistory();
-  updateGatewayInfo();
+  refreshAll();
+  renderGatewayInfo();
 });
 
-// View Navigation Switcher
-function switchView(viewName) {
-  document.querySelectorAll(".content-view").forEach(v => v.classList.remove("active"));
-  document.querySelectorAll(".nav-item").forEach(b => b.classList.remove("active"));
+// View Navigation
+function goView(viewId) {
+  document.querySelectorAll(".view-panel").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
 
-  const target = document.getElementById("view-" + viewName);
+  const target = document.getElementById("view-" + viewId);
   if (target) target.classList.add("active");
 
-  const matchingBtn = document.querySelector(`.nav-item[onclick*="${viewName}"]`);
-  if (matchingBtn) matchingBtn.classList.add("active");
+  const btn = document.getElementById("btn-" + viewId);
+  if (btn) btn.classList.add("active");
 
-  if (viewName === "admin") {
-    loadAdminDashboard();
+  if (viewId === "admin") {
+    renderAdmin();
   }
 }
 
-// Update Dashboard Counters
-function updateUI() {
-  saveStorage("current_user", currentUser);
+function refreshAll() {
+  // Update dashboard UI
+  document.getElementById("uBalance").textContent = "$" + currentUser.balance.toFixed(2);
+  document.getElementById("uDeposited").textContent = "$" + currentUser.totalDeposit.toFixed(2);
+  document.getElementById("uWithdrawn").textContent = "$" + currentUser.totalWithdraw.toFixed(2);
+  document.getElementById("uClicks").textContent = currentUser.clicks;
+  document.getElementById("topUserEmail").textContent = currentUser.email;
 
-  // Sync current user into allUsers list
-  const idx = allUsers.findIndex(u => u.email === currentUser.email);
-  if (idx > -1) {
-    allUsers[idx] = currentUser;
-    saveStorage("all_users", allUsers);
-  }
+  const pkg = packages.find(p => p.id === currentUser.package) || packages[0];
+  document.getElementById("uTier").textContent = pkg.name.toUpperCase();
+  document.getElementById("uMaxClicks").textContent = pkg.dailyAds;
+  document.getElementById("ptcLeft").textContent = Math.max(0, pkg.dailyAds - currentUser.clicks);
 
-  document.getElementById("dashBalance").textContent = "$" + currentUser.balance.toFixed(2);
-  document.getElementById("dashTotalDeposit").textContent = "$" + (currentUser.totalDeposit || 0).toFixed(2);
-  document.getElementById("dashTotalWithdraw").textContent = "$" + (currentUser.totalWithdraw || 0).toFixed(2);
-  document.getElementById("dashTodayClicks").textContent = currentUser.clicksToday;
-  document.getElementById("navUserEmail").textContent = currentUser.email;
-
-  const pkg = packagesList.find(p => p.id === currentUser.package) || packagesList[0];
-  document.getElementById("dashUserTier").textContent = pkg.name.toUpperCase();
-  document.getElementById("dashMaxClicks").textContent = pkg.dailyAds;
-  document.getElementById("ptcRemainingClicks").textContent = Math.max(0, pkg.dailyAds - currentUser.clicksToday);
-  document.getElementById("withdrawableBalanceSpan").textContent = "$" + currentUser.balance.toFixed(2);
+  renderPTC();
+  renderPackages();
+  renderLedger();
 }
 
-// ============================================================================
-// PTC ADS ENGINE & ANTI-BOT CAPTCHA
-// ============================================================================
-function renderPTCAds() {
-  const container = document.getElementById("adsContainer");
-  if (!container) return;
-
-  container.innerHTML = allAds.filter(a => a.active).map(ad => `
-    <div class="ad-card glass-panel">
-      <div>
-        <h3 class="ad-card-title">${ad.title}</h3>
-        <p class="text-xs text-muted mt-1"><i class="fa-solid fa-clock text-cyan"></i> ${ad.duration}s Timer | <i class="fa-solid fa-gift text-emerald"></i> Reward: <strong>$${ad.reward.toFixed(2)}</strong></p>
-      </div>
-      <button class="btn btn-emerald w-full mt-3" onclick="startAdTimer('${ad.id}')">
-        <i class="fa-solid fa-play"></i> Watch Ad
-      </button>
+// PTC
+function renderPTC() {
+  const c = document.getElementById("ptcContainer");
+  c.innerHTML = ads.map(a => `
+    <div class="glass stat-card">
+      <div class="stat-title">${a.duration}s Timer</div>
+      <div class="font-bold mt-2">${a.title}</div>
+      <div class="stat-value text-emerald">$${a.reward.toFixed(2)}</div>
+      <button class="btn btn-emerald w-full mt-2" onclick="watchAd(${a.id})">Watch Ad</button>
     </div>
   `).join("");
 }
 
-function startAdTimer(adId) {
-  const pkg = packagesList.find(p => p.id === currentUser.package) || packagesList[0];
-  if (currentUser.clicksToday >= pkg.dailyAds) {
-    showToast("Daily ad limit reached for your plan! Upgrade to watch more.", "error");
+function watchAd(id) {
+  const pkg = packages.find(p => p.id === currentUser.package) || packages[0];
+  if (currentUser.clicks >= pkg.dailyAds) {
+    notify("Daily click limit reached for your tier!", "error");
     return;
   }
 
-  watchingAd = allAds.find(a => a.id === adId);
-  if (!watchingAd) return;
+  activeAd = ads.find(a => a.id === id);
+  const m = document.getElementById("adModal");
+  m.style.display = "flex";
+  document.getElementById("adCaptchaBox").style.display = "none";
+  document.getElementById("adModalTitle").textContent = activeAd.title;
 
-  const modal = document.getElementById("adModal");
-  modal.classList.add("active");
-  document.getElementById("captchaSection").classList.add("hidden");
-  document.getElementById("adModalTitle").textContent = watchingAd.title;
+  let left = activeAd.duration;
+  const bar = document.getElementById("adProgress");
+  const t = document.getElementById("adTimer");
+  bar.style.width = "0%";
 
-  let timeLeft = watchingAd.duration;
-  const timerNum = document.getElementById("adTimerNum");
-  const progressBar = document.getElementById("adProgressBar");
-  progressBar.style.width = "0%";
+  clearInterval(timerObj);
+  timerObj = setInterval(() => {
+    left -= 0.1;
+    bar.style.width = (((activeAd.duration - left) / activeAd.duration) * 100) + "%";
+    t.textContent = Math.max(0, Math.ceil(left)) + "s";
 
-  clearInterval(adTimerInterval);
-  const total = watchingAd.duration;
-
-  adTimerInterval = setInterval(() => {
-    timeLeft -= 0.1;
-    const pct = ((total - timeLeft) / total) * 100;
-    progressBar.style.width = Math.min(100, pct) + "%";
-    timerNum.textContent = Math.max(0, Math.ceil(timeLeft)) + "s";
-
-    if (timeLeft <= 0) {
-      clearInterval(adTimerInterval);
-      progressBar.style.width = "100%";
-      triggerMathCaptcha();
+    if (left <= 0) {
+      clearInterval(timerObj);
+      const n1 = Math.floor(Math.random() * 8) + 2;
+      const n2 = Math.floor(Math.random() * 8) + 1;
+      mathResult = n1 + n2;
+      document.getElementById("captchaQ").textContent = `${n1} + ${n2} = ?`;
+      document.getElementById("captchaA").value = "";
+      document.getElementById("adCaptchaBox").style.display = "block";
     }
   }, 100);
 }
 
-function triggerMathCaptcha() {
-  const n1 = Math.floor(Math.random() * 8) + 2;
-  const n2 = Math.floor(Math.random() * 8) + 1;
-  captchaCorrect = n1 + n2;
-
-  document.getElementById("captchaMathQuestion").textContent = `${n1} + ${n2} = ?`;
-  document.getElementById("captchaUserAnswer").value = "";
-  document.getElementById("captchaSection").classList.remove("hidden");
-  document.getElementById("captchaUserAnswer").focus();
-}
-
-function submitCaptchaValidation() {
-  const userAns = parseInt(document.getElementById("captchaUserAnswer").value, 10);
-  if (userAns === captchaCorrect) {
-    currentUser.balance += watchingAd.reward;
-    currentUser.clicksToday += 1;
-    updateUI();
-    document.getElementById("adModal").classList.remove("active");
-    clearInterval(adTimerInterval);
-    showToast(`Success! $${watchingAd.reward.toFixed(2)} added to balance.`, "success");
+function verifyCaptcha() {
+  const ans = parseInt(document.getElementById("captchaA").value, 10);
+  if (ans === mathResult) {
+    currentUser.balance += activeAd.reward;
+    currentUser.clicks++;
+    document.getElementById("adModal").style.display = "none";
+    refreshAll();
+    notify(`Earned $${activeAd.reward.toFixed(2)}!`, "success");
   } else {
-    showToast("Incorrect math captcha! Please try again.", "error");
+    notify("Wrong captcha answer!", "error");
   }
 }
 
-// ============================================================================
-// PACKAGES / VIP TIERS MODULE
-// ============================================================================
+// Packages
 function renderPackages() {
-  const container = document.getElementById("packagesContainer");
-  if (!container) return;
-
-  container.innerHTML = packagesList.map(pkg => `
-    <div class="package-card glass-panel ${pkg.id === 'gold' ? 'featured' : ''}">
-      <div>
-        <h3>${pkg.name}</h3>
-        <div class="package-price">${pkg.price === 0 ? "FREE" : "$" + pkg.price}</div>
-        <p class="text-xs text-muted mb-2">ROI: ${pkg.roi}</p>
-        <ul class="text-xs text-muted" style="list-style:none; padding:0; text-align:left; line-height: 1.8;">
-          <li><i class="fa-solid fa-check text-emerald"></i> ${pkg.dailyAds} Daily Ads</li>
-          <li><i class="fa-solid fa-check text-emerald"></i> $${pkg.rewardPerAd.toFixed(2)} Reward Per Ad</li>
-          <li><i class="fa-solid fa-check text-emerald"></i> Priority Payout Queue</li>
-        </ul>
-      </div>
-      <button class="btn btn-cyan w-full mt-4" onclick="upgradePackage('${pkg.id}')">
-        ${currentUser.package === pkg.id ? 'Current Active Plan' : 'Upgrade Plan'}
+  const c = document.getElementById("pkgContainer");
+  c.innerHTML = packages.map(p => `
+    <div class="glass stat-card ${p.id === 'gold' ? 'border-amber' : ''}">
+      <div class="font-bold text-cyan">${p.name}</div>
+      <div class="stat-value text-emerald">${p.price === 0 ? "FREE" : "$" + p.price}</div>
+      <div class="text-xs text-muted mt-2">${p.dailyAds} Ads Daily • Earn $${p.reward}/ad</div>
+      <button class="btn btn-cyan w-full mt-4" onclick="buyPackage('${p.id}')">
+        ${currentUser.package === p.id ? 'Active Plan' : 'Select Plan'}
       </button>
     </div>
   `).join("");
 }
 
-function upgradePackage(pkgId) {
-  const target = packagesList.find(p => p.id === pkgId);
-  if (!target) return;
-
+function buyPackage(pkgId) {
+  const target = packages.find(p => p.id === pkgId);
   if (target.price > currentUser.balance) {
-    showToast(`Insufficient balance! Deposit $${(target.price - currentUser.balance).toFixed(2)} to upgrade.`, "error");
-    switchView("deposit");
+    notify(`Insufficient balance! Deposit $${(target.price - currentUser.balance).toFixed(2)} first.`, "error");
+    goView("deposit");
     return;
   }
-
   currentUser.balance -= target.price;
   currentUser.package = target.id;
-  updateUI();
-  renderPackages();
-  showToast(`Congratulations! You upgraded to ${target.name}.`, "success");
+  refreshAll();
+  notify(`Upgraded to ${target.name}!`, "success");
 }
 
-// ============================================================================
-// DEPOSITS & GATEWAYS
-// ============================================================================
-function updateGatewayInfo() {
-  const gwKey = document.getElementById("depositMethodSelect").value;
-  const gw = GATEWAYS[gwKey];
+// Deposit
+function renderGatewayInfo() {
+  const g = document.getElementById("depGateway").value;
+  const info = GATEWAYS[g];
   document.getElementById("gatewayInfoBox").innerHTML = `
-    <div class="text-cyan font-bold">${gw.title}</div>
-    <div class="text-xs text-muted mt-1">Send your deposit payment to:</div>
-    <div class="text-lg font-bold text-white mt-1" style="word-break: break-all;">${gw.account}</div>
-    <div class="text-xs text-muted mt-1">Account Name: <span class="text-emerald font-semibold">${gw.name}</span></div>
+    <strong>${info.title}</strong><br>
+    Account: <span class="text-cyan font-bold">${info.account}</span><br>
+    Name: ${info.name}
   `;
 }
 
-function handleDepositSubmit(e) {
+function onDeposit(e) {
   e.preventDefault();
-  const method = document.getElementById("depositMethodSelect").value;
-  const amount = parseFloat(document.getElementById("depositAmount").value);
-  const tid = document.getElementById("depositTID").value.trim();
+  const amt = parseFloat(document.getElementById("depAmount").value);
+  const tid = document.getElementById("depTID").value.trim();
 
-  if (!tid || isNaN(amount) || amount <= 0) {
-    showToast("Please enter a valid amount and TID.", "error");
-    return;
-  }
-
-  const newTx = {
-    id: "DEP-" + Date.now().toString().slice(-6),
+  txList.unshift({
+    id: "DEP-" + Date.now().toString().slice(-4),
     user: currentUser.email,
     type: "deposit",
-    method: GATEWAYS[method].title,
+    method: document.getElementById("depGateway").value.toUpperCase(),
     tid: tid,
-    amount: amount,
-    status: "pending",
-    date: new Date().toISOString().split("T")[0]
-  };
+    amount: amt,
+    status: "pending"
+  });
 
-  transactions.unshift(newTx);
-  saveStorage("transactions", transactions);
-  document.getElementById("depositForm").reset();
-
-  showToast("Deposit submitted! Status: Pending Admin Verification.", "success");
-  renderTransactionHistory();
-  switchView("dashboard");
+  e.target.reset();
+  notify("Deposit submitted for Admin verification!", "success");
+  refreshAll();
+  goView("dashboard");
 }
 
-// ============================================================================
-// WITHDRAWALS ENGINE
-// ============================================================================
-function handleWithdrawSubmit(e) {
+// Withdraw
+function onWithdraw(e) {
   e.preventDefault();
-  const amount = parseFloat(document.getElementById("withdrawAmount").value);
-  const method = document.getElementById("withdrawMethodSelect").value;
-  const account = document.getElementById("withdrawAccount").value.trim();
-
-  if (amount > currentUser.balance) {
-    showToast("Withdrawal amount exceeds your available balance!", "error");
+  const amt = parseFloat(document.getElementById("wthAmount").value);
+  if (amt > currentUser.balance) {
+    notify("Amount exceeds available balance!", "error");
     return;
   }
 
-  currentUser.balance -= amount;
-  updateUI();
-
-  const newTx = {
-    id: "WTH-" + Date.now().toString().slice(-6),
+  currentUser.balance -= amt;
+  txList.unshift({
+    id: "WTH-" + Date.now().toString().slice(-4),
     user: currentUser.email,
     type: "withdraw",
-    method: `${method} (${account})`,
-    tid: "PENDING-APPROVAL",
-    amount: amount,
-    status: "pending",
-    date: new Date().toISOString().split("T")[0]
-  };
+    method: document.getElementById("wthGateway").value + " (" + document.getElementById("wthAccount").value + ")",
+    tid: "REVIEW",
+    amount: amt,
+    status: "pending"
+  });
 
-  transactions.unshift(newTx);
-  saveStorage("transactions", transactions);
-  document.getElementById("withdrawForm").reset();
-
-  showToast("Withdrawal request queued! Funds will be sent after review.", "info");
-  renderTransactionHistory();
-  switchView("dashboard");
+  e.target.reset();
+  notify("Withdrawal submitted! Admin will process payout.", "info");
+  refreshAll();
+  goView("dashboard");
 }
 
-function renderTransactionHistory() {
-  const tbody = document.getElementById("userTxList");
-  if (!tbody) return;
-
-  const myTxs = transactions.filter(t => t.user === currentUser.email);
-  if (myTxs.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No transactions recorded yet.</td></tr>`;
-    return;
-  }
-
-  tbody.innerHTML = myTxs.map(t => `
+function renderLedger() {
+  const b = document.getElementById("userTxBody");
+  b.innerHTML = txList.map(t => `
     <tr>
-      <td><span class="badge-tier">${t.type.toUpperCase()}</span></td>
-      <td>${t.method}<br><span class="text-xs text-muted">${t.tid}</span></td>
-      <td class="font-bold ${t.type === 'deposit' ? 'text-emerald' : 'text-cyan'}">$${t.amount.toFixed(2)}</td>
-      <td><span class="status-pill status-${t.status}">${t.status.toUpperCase()}</span></td>
-      <td class="text-xs text-muted">${t.date}</td>
+      <td><strong>${t.type.toUpperCase()}</strong></td>
+      <td>${t.method}</td>
+      <td class="text-cyan">${t.tid}</td>
+      <td class="font-bold text-emerald">$${t.amount.toFixed(2)}</td>
+      <td><span style="color:${t.status === 'approved' ? '#10b981' : (t.status === 'rejected' ? '#ef4444' : '#f59e0b')}">${t.status.toUpperCase()}</span></td>
     </tr>
   `).join("");
 }
 
-// ============================================================================
-// MASTER ADMIN DASHBOARD - FULL CONTROL ENGINE
-// ============================================================================
-function unlockAdminView(msg) {
-  document.getElementById("adminNavBtn").classList.remove("hidden");
-  switchView("admin");
-  showToast(msg || "Admin Console Active", "info");
+// Admin Logic
+function adminTab(tabId) {
+  document.querySelectorAll(".adm-sub").forEach(s => s.style.display = "none");
+  const el = document.getElementById("adm-" + tabId);
+  if (el) el.style.display = "block";
 }
 
-function exitAdminView() {
-  document.getElementById("adminNavBtn").classList.add("hidden");
-  switchView("dashboard");
-}
-
-function switchAdminTab(tabName) {
-  document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
-  document.querySelectorAll(".admin-tab-content").forEach(c => c.style.display = "none");
-
-  const activeBtn = Array.from(document.querySelectorAll(".tab-btn")).find(b => b.getAttribute("onclick").includes(tabName));
-  if (activeBtn) activeBtn.classList.add("active");
-
-  const activeContent = document.getElementById("adm-tab-" + tabName);
-  if (activeContent) activeContent.style.display = "block";
-}
-
-function loadAdminDashboard() {
-  // Aggregate Metrics
-  document.getElementById("admTotalUsers").textContent = allUsers.length;
-
-  const depSum = transactions.filter(t => t.type === 'deposit' && t.status === 'approved').reduce((a, b) => a + b.amount, 0);
-  document.getElementById("admTotalDeposits").textContent = "$" + depSum.toFixed(2);
-
-  const wthSum = transactions.filter(t => t.type === 'withdraw' && t.status === 'pending').reduce((a, b) => a + b.amount, 0);
-  document.getElementById("admPendingWithdrawals").textContent = "$" + wthSum.toFixed(2);
-
-  document.getElementById("admTotalAds").textContent = allAds.length;
-
-  renderAdminUsers();
-  renderAdminDeposits();
-  renderAdminWithdrawals();
-  renderAdminPackages();
-  renderAdminAds();
-}
-
-// 1. ADMIN USER MANAGEMENT & DIRECT BALANCE EDIT
-function renderAdminUsers() {
-  const tbody = document.getElementById("admUsersTableBody");
-  tbody.innerHTML = allUsers.map(u => `
+function renderAdmin() {
+  // Users
+  document.getElementById("admUsersBody").innerHTML = users.map(u => `
     <tr>
-      <td><strong>${u.email}</strong></td>
-      <td><span class="status-pill status-${u.status}">${u.status.toUpperCase()}</span></td>
-      <td class="font-bold text-emerald text-base">$${u.balance.toFixed(2)}</td>
-      <td><span class="badge-tier">${u.package.toUpperCase()}</span></td>
+      <td>${u.email}</td>
+      <td>${u.status}</td>
+      <td class="font-bold text-emerald">$${u.balance.toFixed(2)}</td>
+      <td>${u.package.toUpperCase()}</td>
       <td>
-        <button class="btn btn-sm btn-cyan" onclick="openEditBalanceModal('${u.email}', ${u.balance})"><i class="fa-solid fa-pen-to-square"></i> Edit Balance</button>
-        ${u.status === 'active' ? `<button class="btn btn-sm btn-outline-danger" onclick="adminToggleUser('${u.email}', 'suspended')">Ban</button>` : `<button class="btn btn-sm btn-emerald" onclick="adminToggleUser('${u.email}', 'active')">Unban</button>`}
+        <button class="btn btn-sm btn-cyan" onclick="openBalModal('${u.email}', ${u.balance})">Edit $</button>
       </td>
     </tr>
   `).join("");
-}
 
-function openEditBalanceModal(email, currentBal) {
-  document.getElementById("editBalanceUserEmail").value = email;
-  document.getElementById("editBalanceUserLabel").textContent = `Editing Balance for: ${email}`;
-  document.getElementById("editBalanceInput").value = currentBal.toFixed(2);
-  document.getElementById("editBalanceModal").classList.add("active");
-}
-
-function closeEditBalanceModal() {
-  document.getElementById("editBalanceModal").classList.remove("active");
-}
-
-function handleEditBalanceSubmit(e) {
-  e.preventDefault();
-  const email = document.getElementById("editBalanceUserEmail").value;
-  const newBal = parseFloat(document.getElementById("editBalanceInput").value);
-
-  if (isNaN(newBal) || newBal < 0) {
-    showToast("Please enter a valid positive balance", "error");
-    return;
-  }
-
-  const user = allUsers.find(u => u.email === email);
-  if (user) {
-    user.balance = newBal;
-    saveStorage("all_users", allUsers);
-
-    if (currentUser.email === email) {
-      currentUser.balance = newBal;
-      updateUI();
-    }
-
-    closeEditBalanceModal();
-    loadAdminDashboard();
-    showToast(`Updated balance of ${email} to $${newBal.toFixed(2)}`, "success");
-  }
-}
-
-function adminToggleUser(email, newStatus) {
-  const user = allUsers.find(u => u.email === email);
-  if (user) {
-    user.status = newStatus;
-    saveStorage("all_users", allUsers);
-    loadAdminDashboard();
-    showToast(`User status set to ${newStatus}`, "info");
-  }
-}
-
-// 2. ADMIN DEPOSITS APPROVAL / REJECTION
-function renderAdminDeposits() {
-  const tbody = document.getElementById("admDepositsTableBody");
-  const pendings = transactions.filter(t => t.type === 'deposit' && t.status === 'pending');
-
-  if (pendings.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">No pending deposit verification requests.</td></tr>`;
-    return;
-  }
-
-  tbody.innerHTML = pendings.map(d => `
+  // Deposits
+  const deps = txList.filter(t => t.type === "deposit" && t.status === "pending");
+  document.getElementById("admDepositsBody").innerHTML = deps.length ? deps.map(d => `
     <tr>
       <td>${d.user}</td>
       <td>${d.method}</td>
-      <td class="text-cyan font-bold">${d.tid}</td>
+      <td class="text-cyan">${d.tid}</td>
       <td class="font-bold text-emerald">$${d.amount.toFixed(2)}</td>
-      <td>${d.date}</td>
       <td>
-        <button class="btn btn-sm btn-emerald" onclick="adminProcessDeposit('${d.id}', true)"><i class="fa-solid fa-check"></i> Approve</button>
-        <button class="btn btn-sm btn-outline-danger" onclick="adminProcessDeposit('${d.id}', false)"><i class="fa-solid fa-xmark"></i> Reject</button>
+        <button class="btn btn-sm btn-emerald" onclick="approveDeposit('${d.id}', true)">Approve</button>
+        <button class="btn btn-sm btn-danger" onclick="approveDeposit('${d.id}', false)">Reject</button>
       </td>
     </tr>
-  `).join("");
-}
+  `).join("") : `<tr><td colspan="5" class="text-muted">No pending deposits</td></tr>`;
 
-function adminProcessDeposit(txId, isApproved) {
-  const tx = transactions.find(t => t.id === txId);
-  if (!tx) return;
-
-  if (isApproved) {
-    tx.status = "approved";
-    // Credit user's balance
-    const user = allUsers.find(u => u.email === tx.user);
-    if (user) {
-      user.balance += tx.amount;
-      user.totalDeposit = (user.totalDeposit || 0) + tx.amount;
-      saveStorage("all_users", allUsers);
-
-      if (currentUser.email === user.email) {
-        currentUser = user;
-        updateUI();
-      }
-    }
-    showToast(`Deposit Approved! $${tx.amount.toFixed(2)} credited to user.`, "success");
-  } else {
-    tx.status = "rejected";
-    showToast("Deposit request rejected.", "info");
-  }
-
-  saveStorage("transactions", transactions);
-  loadAdminDashboard();
-  renderTransactionHistory();
-}
-
-// 3. ADMIN WITHDRAWALS APPROVAL / REJECTION (WITH AUTO REFUND)
-function renderAdminWithdrawals() {
-  const tbody = document.getElementById("admWithdrawalsTableBody");
-  const pendings = transactions.filter(t => t.type === 'withdraw' && t.status === 'pending');
-
-  if (pendings.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No pending withdrawal requests.</td></tr>`;
-    return;
-  }
-
-  tbody.innerHTML = pendings.map(w => `
+  // Withdrawals
+  const wths = txList.filter(t => t.type === "withdraw" && t.status === "pending");
+  document.getElementById("admWithdrawalsBody").innerHTML = wths.length ? wths.map(w => `
     <tr>
       <td>${w.user}</td>
       <td>${w.method}</td>
       <td class="font-bold text-cyan">$${w.amount.toFixed(2)}</td>
-      <td>${w.date}</td>
       <td>
-        <button class="btn btn-sm btn-emerald" onclick="adminProcessWithdrawal('${w.id}', true)"><i class="fa-solid fa-check"></i> Mark Paid</button>
-        <button class="btn btn-sm btn-outline-danger" onclick="adminProcessWithdrawal('${w.id}', false)"><i class="fa-solid fa-rotate-left"></i> Reject & Refund</button>
+        <button class="btn btn-sm btn-emerald" onclick="approveWithdrawal('${w.id}', true)">Paid</button>
+        <button class="btn btn-sm btn-danger" onclick="approveWithdrawal('${w.id}', false)">Refund</button>
       </td>
+    </tr>
+  `).join("") : `<tr><td colspan="4" class="text-muted">No pending withdrawals</td></tr>`;
+
+  // Packages
+  document.getElementById("admPackagesBody").innerHTML = packages.map((p, i) => `
+    <tr>
+      <td><strong>${p.name}</strong></td>
+      <td><input type="number" id="p_prc_${i}" value="${p.price}" class="input-control" style="max-width:80px;" /></td>
+      <td><input type="number" id="p_ads_${i}" value="${p.dailyAds}" class="input-control" style="max-width:80px;" /></td>
+      <td><button class="btn btn-sm btn-emerald" onclick="savePkg(${i})">Save</button></td>
+    </tr>
+  `).join("");
+
+  // Ads
+  document.getElementById("admAdsBody").innerHTML = ads.map(a => `
+    <tr>
+      <td>${a.title}</td>
+      <td class="text-emerald font-bold">$${a.reward}</td>
+      <td>${a.duration}s</td>
+      <td><button class="btn btn-sm btn-danger" onclick="delAd(${a.id})">Delete</button></td>
     </tr>
   `).join("");
 }
 
-function adminProcessWithdrawal(txId, isPaid) {
-  const tx = transactions.find(t => t.id === txId);
-  if (!tx) return;
-
-  if (isPaid) {
-    tx.status = "completed";
-    const user = allUsers.find(u => u.email === tx.user);
-    if (user) {
-      user.totalWithdraw = (user.totalWithdraw || 0) + tx.amount;
-    }
-    showToast("Withdrawal marked as completed!", "success");
-  } else {
-    tx.status = "rejected";
-    // Refund the amount back to user's balance
-    const user = allUsers.find(u => u.email === tx.user);
-    if (user) {
-      user.balance += tx.amount;
-      if (currentUser.email === user.email) {
-        currentUser.balance = user.balance;
-        updateUI();
-      }
-    }
-    showToast("Withdrawal rejected. Amount automatically refunded to user balance.", "info");
+function openBalModal(email, current) {
+  editEmail = email;
+  document.getElementById("balTargetEmail").textContent = "Editing for: " + email;
+  document.getElementById("balNewAmount").value = current;
+  document.getElementById("balModal").style.display = "flex";
+}
+function closeBalModal() {
+  document.getElementById("balModal").style.display = "none";
+}
+function saveNewBalance() {
+  const val = parseFloat(document.getElementById("balNewAmount").value);
+  const u = users.find(x => x.email === editEmail);
+  if (u) {
+    u.balance = val;
+    closeBalModal();
+    renderAdmin();
+    refreshAll();
+    notify("Balance updated!", "success");
   }
-
-  saveStorage("transactions", transactions);
-  saveStorage("all_users", allUsers);
-  loadAdminDashboard();
-  renderTransactionHistory();
 }
 
-// 4. ADMIN PACKAGES CONFIGURATION MANAGER
-function renderAdminPackages() {
-  const tbody = document.getElementById("admPackagesTableBody");
-  tbody.innerHTML = packagesList.map((pkg, idx) => `
-    <tr>
-      <td><strong>${pkg.name}</strong></td>
-      <td><input type="number" id="pkg_price_${idx}" value="${pkg.price}" class="input-control" style="max-width:90px;" /></td>
-      <td><input type="number" id="pkg_ads_${idx}" value="${pkg.dailyAds}" class="input-control" style="max-width:80px;" /></td>
-      <td><input type="number" step="0.01" id="pkg_reward_${idx}" value="${pkg.rewardPerAd}" class="input-control" style="max-width:90px;" /></td>
-      <td><input type="text" id="pkg_roi_${idx}" value="${pkg.roi}" class="input-control" style="max-width:120px;" /></td>
-      <td>
-        <button class="btn btn-sm btn-emerald" onclick="adminSavePackage(${idx})">Save</button>
-      </td>
-    </tr>
-  `).join("");
-}
-
-function adminSavePackage(idx) {
-  const p = packagesList[idx];
-  p.price = parseFloat(document.getElementById(`pkg_price_${idx}`).value);
-  p.dailyAds = parseInt(document.getElementById(`pkg_ads_${idx}`).value, 10);
-  p.rewardPerAd = parseFloat(document.getElementById(`pkg_reward_${idx}`).value);
-  p.roi = document.getElementById(`pkg_roi_${idx}`).value;
-
-  saveStorage("packages", packagesList);
-  renderPackages();
-  loadAdminDashboard();
-  updateUI();
-  showToast(`Updated settings for ${p.name}!`, "success");
-}
-
-// 5. ADMIN PTC ADS MANAGER
-function renderAdminAds() {
-  const tbody = document.getElementById("admAdsTableBody");
-  tbody.innerHTML = allAds.map(ad => `
-    <tr>
-      <td><strong>${ad.title}</strong></td>
-      <td class="text-emerald font-bold">$${ad.reward.toFixed(2)}</td>
-      <td>${ad.duration}s</td>
-      <td>
-        <button class="btn btn-sm btn-outline-danger" onclick="adminDeleteAd('${ad.id}')"><i class="fa-solid fa-trash"></i></button>
-      </td>
-    </tr>
-  `).join("");
-}
-
-function handleCreateAdSubmit(e) {
-  e.preventDefault();
-  const title = document.getElementById("newAdTitle").value.trim();
-  const reward = parseFloat(document.getElementById("newAdReward").value);
-  const duration = parseInt(document.getElementById("newAdDuration").value, 10);
-  const url = document.getElementById("newAdUrl").value.trim();
-
-  allAds.push({ id: "ad_" + Date.now(), title, reward, duration, url, active: true });
-  saveStorage("all_ads", allAds);
-  document.getElementById("newAdForm").reset();
-
-  showToast("New PTC Ad published successfully!", "success");
-  loadAdminDashboard();
-  renderPTCAds();
-}
-
-function adminDeleteAd(id) {
-  allAds = allAds.filter(a => a.id !== id);
-  saveStorage("all_ads", allAds);
-  loadAdminDashboard();
-  renderPTCAds();
-  showToast("Ad deleted.", "info");
-}
-
-// ============================================================================
-// SECRET SHORTCUTS & TRIGGERS
-// ============================================================================
-function setupShortcuts() {
-  window.addEventListener("keydown", (e) => {
-    if (e.ctrlKey && e.shiftKey && (e.key === "A" || e.key === "a")) {
-      e.preventDefault();
-      document.getElementById("adminPinModal").classList.add("active");
+function approveDeposit(txId, ok) {
+  const t = txList.find(x => x.id === txId);
+  if (!t) return;
+  t.status = ok ? "approved" : "rejected";
+  if (ok) {
+    const u = users.find(x => x.email === t.user);
+    if (u) {
+      u.balance += t.amount;
+      u.totalDeposit += t.amount;
     }
+    notify(`Approved! $${t.amount} added.`, "success");
+  } else {
+    notify("Deposit rejected.", "info");
+  }
+  renderAdmin();
+  refreshAll();
+}
+
+function approveWithdrawal(txId, ok) {
+  const t = txList.find(x => x.id === txId);
+  if (!t) return;
+  t.status = ok ? "approved" : "rejected";
+  if (!ok) {
+    const u = users.find(x => x.email === t.user);
+    if (u) u.balance += t.amount; // refund
+    notify("Withdrawal rejected & refunded.", "info");
+  } else {
+    const u = users.find(x => x.email === t.user);
+    if (u) u.totalWithdraw += t.amount;
+    notify("Withdrawal marked as Paid!", "success");
+  }
+  renderAdmin();
+  refreshAll();
+}
+
+function savePkg(i) {
+  packages[i].price = parseFloat(document.getElementById(`p_prc_${i}`).value);
+  packages[i].dailyAds = parseInt(document.getElementById(`p_ads_${i}`).value, 10);
+  renderAdmin();
+  refreshAll();
+  notify("Package updated!", "success");
+}
+
+function onAddAd(e) {
+  e.preventDefault();
+  ads.push({
+    id: Date.now(),
+    title: document.getElementById("adTitle").value,
+    reward: parseFloat(document.getElementById("adReward").value),
+    duration: parseInt(document.getElementById("adDuration").value, 10)
   });
+  e.target.reset();
+  renderAdmin();
+  refreshAll();
+  notify("Ad published!", "success");
 }
 
-function handleSecretFooterClick() {
-  secretTapCount++;
-  if (secretTapCount >= 5) {
-    secretTapCount = 0;
-    document.getElementById("adminPinModal").classList.add("active");
-  }
+function delAd(id) {
+  ads = ads.filter(a => a.id !== id);
+  renderAdmin();
+  refreshAll();
+  notify("Ad deleted.", "info");
 }
 
-function handleAdminPinSubmit(e) {
-  e.preventDefault();
-  const pin = document.getElementById("masterAdminPin").value;
-  if (pin === MASTER_ADMIN_PIN) {
-    document.getElementById("adminPinModal").classList.remove("active");
-    unlockAdminView("PIN Keyhole Verified!");
-  } else {
-    showToast("Invalid Master Admin PIN!", "error");
-  }
-}
-
-// Toast Notifier
-function showToast(msg, type = "info") {
-  const container = document.getElementById("toastContainer");
+function notify(txt, type) {
+  const box = document.getElementById("toastBox");
   const el = document.createElement("div");
-  el.className = `toast toast-${type}`;
-  el.textContent = msg;
-  container.appendChild(el);
-  setTimeout(() => el.remove(), 3500);
+  el.className = `toast ${type === 'error' ? 'toast-error' : (type === 'info' ? 'toast-info' : '')}`;
+  el.textContent = txt;
+  box.appendChild(el);
+  setTimeout(() => el.remove(), 3000);
 }
