@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NexusPay | Master Admin Console</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #06090e;
+      --card: rgba(15, 23, 42, 0.95);
+      --border: rgba(255, 255, 255, 0.1);
+      --cyan: #06b6d4;
+      --emerald: #10b981;
+      --amber: #f59e0b;
+      --red: #ef4444;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; font-family:'Inter', sans-serif; }
+    body { background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+    .glass { background: var(--card); border: 1px solid var(--border); border-radius: 12px; }
+    .text-cyan { color: var(--cyan); }
+    .text-emerald { color: var(--emerald); }
+    .text-amber { color: var(--amber); }
+    .text-muted { color: var(--muted); }
+    .flex-between { display: flex; justify-content: space-between; align-items: center; }
+    .font-bold { font-weight: 700; }
+    .w-full { width: 100%; }
+    .p-4 { padding: 1rem; }
+    .mt-4 { margin-top: 1rem; }
+    .mt-6 { margin-top: 1.5rem; }
+
+    /* Admin Top Header */
+    .admin-bar { padding: 1rem 1.5rem; border-left: 4px solid var(--amber); border-radius: 0; }
+    .btn { padding: 0.45rem 0.9rem; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; font-size: 0.85rem; }
+    .btn-cyan { background: var(--cyan); color: black; }
+    .btn-emerald { background: var(--emerald); color: black; }
+    .btn-amber { background: var(--amber); color: black; }
+    .btn-danger { background: transparent; border: 1px solid var(--red); color: var(--red); }
+    .btn-sm { padding: 0.25rem 0.6rem; font-size: 0.75rem; }
+    .input-control { background: #0b1120; border: 1px solid var(--border); color: white; padding: 0.6rem; border-radius: 8px; outline: none; width: 100%; }
+
+    /* Stats */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-top: 1rem; }
+    .stat-card { padding: 1.2rem; border-left: 4px solid var(--cyan); }
+    .stat-title { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; }
+    .stat-value { font-size: 1.6rem; font-weight: 800; margin-top: 0.2rem; }
+
+    .main-wrap { max-width: 1200px; width: 100%; margin: 1.5rem auto; padding: 0 1rem; flex: 1; }
+    .table-wrap { overflow-x: auto; width: 100%; }
+    .table { width: 100%; border-collapse: collapse; text-align: left; }
+    .table th, .table td { padding: 0.75rem; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+
+    /* Lock Screen Modal */
+    .lock-screen { position: fixed; top:0; left:0; width:100%; height:100%; background: #030712; display: flex; align-items: center; justify-content: center; z-index: 10000; }
+    .lock-box { width: 100%; max-width: 400px; padding: 2rem; text-align: center; }
+
+    .toast-box { position: fixed; top: 1rem; right: 1rem; z-index: 10001; display: flex; flex-direction: column; gap: 0.5rem; }
+    .toast { padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.85rem; color: white; background: #065f46; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+    .toast-error { background: #991b1b; }
+    .toast-info { background: #0e3b5e; }
+  </style>
+</head>
+<body>
+
+  <!-- Security Gate PIN 778899 -->
+  <div id="lockScreen" class="lock-screen">
+    <div class="glass lock-box">
+      <i class="fa-solid fa-shield-halved text-cyan" style="font-size: 2.5rem;"></i>
+      <h2 class="mt-4">Master Admin Auth</h2>
+      <p class="text-muted text-xs mt-1">Enter Master Admin PIN to unlock management console</p>
+      <form onsubmit="unlockConsole(event)" class="mt-4">
+        <input type="password" id="adminPinInput" class="input-control text-center" style="font-size: 1.2rem; letter-spacing: 4px;" placeholder="PIN" required autofocus />
+        <button type="submit" class="btn btn-cyan w-full mt-4">Unlock Console</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="toastBox" class="toast-box"></div>
+
+  <!-- Top Admin Bar -->
+  <header class="glass admin-bar flex-between">
+    <div>
+      <h2><i class="fa-solid fa-crown text-amber"></i> NexusPay Administration Portal</h2>
+      <span class="text-xs text-cyan">Master Admin Console Active</span>
+    </div>
+    <a href="index.html" class="btn btn-danger btn-sm"><i class="fa-solid fa-arrow-left"></i> View User Site</a>
+  </header>
+
+  <main class="main-wrap">
+
+    <!-- Platform Quick Metrics -->
+    <div class="stats-grid">
+      <div class="glass stat-card">
+        <div class="stat-title">Platform Users</div>
+        <div class="stat-value text-cyan" id="mTotalUsers">0</div>
+      </div>
+      <div class="glass stat-card" style="border-left-color: var(--emerald);">
+        <div class="stat-title">Approved Deposits</div>
+        <div class="stat-value text-emerald" id="mTotalDeposits">$0.00</div>
+      </div>
+      <div class="glass stat-card" style="border-left-color: var(--amber);">
+        <div class="stat-title">Pending Withdrawals</div>
+        <div class="stat-value text-amber" id="mPendingWithdrawals">$0.00</div>
+      </div>
+      <div class="glass stat-card" style="border-left-color: #a855f7;">
+        <div class="stat-title">Pending Registrations</div>
+        <div class="stat-value text-purple" id="mPendingUsers">0</div>
+      </div>
+    </div>
+
+    <!-- Admin Navigation Tabs -->
+    <div style="display:flex; gap:0.5rem; margin-top:1.5rem; flex-wrap:wrap;">
+      <button class="btn btn-sm btn-cyan" onclick="setTab('users')"><i class="fa-solid fa-users"></i> User Accounts & Requests</button>
+      <button class="btn btn-sm btn-emerald" onclick="setTab('gateways')"><i class="fa-solid fa-wallet"></i> Payment Gateways Editor</button>
+      <button class="btn btn-sm btn-emerald" onclick="setTab('deposits')"><i class="fa-solid fa-inbox"></i> Deposit Queue</button>
+      <button class="btn btn-sm btn-amber" onclick="setTab('withdrawals')"><i class="fa-solid fa-hand-holding-dollar"></i> Withdrawal Queue</button>
+      <button class="btn btn-sm btn-cyan" onclick="setTab('packages')"><i class="fa-solid fa-gem"></i> Packages</button>
+      <button class="btn btn-sm btn-emerald" onclick="setTab('ads')"><i class="fa-solid fa-bullhorn"></i> PTC Ads</button>
+    </div>
+
+    <!-- TAB 1: USERS & REGISTRATION REQUESTS -->
+    <div id="tab-users" class="glass p-4 mt-4 tab-content">
+      <div class="flex-between">
+        <h3>User Accounts, Registration Approval & Balance</h3>
+        <span class="text-xs text-muted">Approve pending signups or edit balances</span>
+      </div>
+      <div class="table-wrap mt-3">
+        <table class="table">
+          <thead><tr><th>Name & Email</th><th>Status</th><th>Balance</th><th>Plan</th><th>Actions</th></tr></thead>
+          <tbody id="admUsersBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 2: PAYMENT GATEWAYS CONFIGURATION (CHANGE NUMBERS & TITLES) -->
+    <div id="tab-gateways" class="glass p-4 mt-4 tab-content" style="display:none;">
+      <h3>Edit Payment Gateways (JazzCash, Easypaisa, USDT)</h3>
+      <p class="text-xs text-muted">Whatever account numbers you set here will be displayed immediately to users on the deposit & withdraw forms.</p>
+      
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; margin-top: 1rem;">
+        
+        <!-- JazzCash Card -->
+        <div class="glass p-4" style="border: 1px solid var(--amber);">
+          <h4 class="text-amber"><i class="fa-solid fa-mobile-screen"></i> JazzCash Pakistan</h4>
+          <div class="mt-2">
+            <label class="text-xs text-muted">Account Number / Mobile</label>
+            <input type="text" id="gw_jazzcash_acc" class="input-control" />
+          </div>
+          <div class="mt-2">
+            <label class="text-xs text-muted">Account Holder Title</label>
+            <input type="text" id="gw_jazzcash_name" class="input-control" />
+          </div>
+          <button class="btn btn-amber btn-sm w-full mt-3" onclick="saveGateway('jazzcash')">Update JazzCash</button>
+        </div>
+
+        <!-- Easypaisa Card -->
+        <div class="glass p-4" style="border: 1px solid var(--emerald);">
+          <h4 class="text-emerald"><i class="fa-solid fa-mobile-screen-button"></i> Easypaisa Pakistan</h4>
+          <div class="mt-2">
+            <label class="text-xs text-muted">Account Number / Mobile</label>
+            <input type="text" id="gw_easypaisa_acc" class="input-control" />
+          </div>
+          <div class="mt-2">
+            <label class="text-xs text-muted">Account Holder Title</label>
+            <input type="text" id="gw_easypaisa_name" class="input-control" />
+          </div>
+          <button class="btn btn-emerald btn-sm w-full mt-3" onclick="saveGateway('easypaisa')">Update Easypaisa</button>
+        </div>
+
+        <!-- USDT Card -->
+        <div class="glass p-4" style="border: 1px solid var(--cyan);">
+          <h4 class="text-cyan"><i class="fa-brands fa-ethereum"></i> USDT (TRC-20 Tron)</h4>
+          <div class="mt-2">
+            <label class="text-xs text-muted">Tron TRC-20 Wallet Address</label>
+            <input type="text" id="gw_usdt_acc" class="input-control" />
+          </div>
+          <div class="mt-2">
+            <label class="text-xs text-muted">Wallet Title / Exchange</label>
+            <input type="text" id="gw_usdt_name" class="input-control" />
+          </div>
+          <button class="btn btn-cyan btn-sm w-full mt-3" onclick="saveGateway('usdt')">Update USDT Wallet</button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TAB 3: DEPOSIT VERIFICATION -->
+    <div id="tab-deposits" class="glass p-4 mt-4 tab-content" style="display:none;">
+      <h3>Pending Deposit Verifications</h3>
+      <div class="table-wrap mt-3">
+        <table class="table">
+          <thead><tr><th>User</th><th>Gateway</th><th>TID / Hash</th><th>Amount</th><th>Action</th></tr></thead>
+          <tbody id="admDepositsBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 4: WITHDRAWAL PAYOUTS -->
+    <div id="tab-withdrawals" class="glass p-4 mt-4 tab-content" style="display:none;">
+      <h3>Pending Withdrawal Requests</h3>
+      <div class="table-wrap mt-3">
+        <table class="table">
+          <thead><tr><th>User</th><th>Account / Wallet</th><th>Amount</th><th>Action</th></tr></thead>
+          <tbody id="admWithdrawalsBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 5: PACKAGES -->
+    <div id="tab-packages" class="glass p-4 mt-4 tab-content" style="display:none;">
+      <h3>Package Pricing & Ad Limits</h3>
+      <div class="table-wrap mt-3">
+        <table class="table">
+          <thead><tr><th>Plan Name</th><th>Price ($)</th><th>Daily Ads</th><th>Earn/Ad ($)</th><th>Save</th></tr></thead>
+          <tbody id="admPackagesBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 6: PTC ADS -->
+    <div id="tab-ads" class="glass p-4 mt-4 tab-content" style="display:none;">
+      <h3>Publish New PTC Ad</h3>
+      <form onsubmit="onAddAd(event)" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:0.5rem; margin-top:0.5rem;">
+        <input type="text" id="adTitle" placeholder="Ad Title" class="input-control" required />
+        <input type="number" id="adReward" step="0.01" placeholder="Reward ($)" class="input-control" required />
+        <input type="number" id="adDuration" placeholder="Duration (Seconds)" class="input-control" required />
+        <button type="submit" class="btn btn-emerald">Create Ad</button>
+      </form>
+      <h4 class="mt-4">Live PTC Campaigns</h4>
+      <div class="table-wrap mt-2">
+        <table class="table">
+          <thead><tr><th>Title</th><th>Reward</th><th>Duration</th><th>Action</th></tr></thead>
+          <tbody id="admAdsBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="app.js"></script>
+  <script>
+    function unlockConsole(e) {
+      e.preventDefault();
+      const pin = document.getElementById("adminPinInput").value;
+      if (pin === "778899") {
+        document.getElementById("lockScreen").style.display = "none";
+        renderAdminDashboard();
+        notify("Master Console Unlocked!", "success");
+      } else {
+        notify("Invalid PIN Code!", "error");
+      }
+    }
+
+    function setTab(name) {
+      document.querySelectorAll(".tab-content").forEach(c => c.style.display = "none");
+      const el = document.getElementById("tab-" + name);
+      if (el) el.style.display = "block";
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const p = new URLSearchParams(window.location.search);
+      if (p.get("access") === "admin_secure_key") {
+        document.getElementById("lockScreen").style.display = "none";
+        renderAdminDashboard();
+      }
+    });
+  </script>
+</body>
+</html>
