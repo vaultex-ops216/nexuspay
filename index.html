@@ -24,7 +24,6 @@
     .glass { background: var(--card); border: 1px solid var(--border); border-radius: 12px; }
     .text-cyan { color: var(--cyan); }
     .text-emerald { color: var(--emerald); }
-    .text-amber { color: var(--amber); }
     .text-muted { color: var(--muted); }
     .text-xs { font-size: 0.75rem; }
     .text-sm { font-size: 0.875rem; }
@@ -43,13 +42,11 @@
     .nav-links { display: flex; gap: 0.4rem; flex-wrap: wrap; }
     .nav-btn { background: transparent; border: 1px solid transparent; color: var(--muted); padding: 0.45rem 0.85rem; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem; }
     .nav-btn:hover, .nav-btn.active { color: var(--cyan); background: rgba(255,255,255,0.06); border-color: var(--border); }
-    .admin-pill { border: 1px solid var(--amber) !important; color: var(--amber) !important; }
 
     /* Buttons & Inputs */
     .btn { padding: 0.5rem 1rem; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; font-size: 0.85rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; }
     .btn-emerald { background: var(--emerald); color: black; }
     .btn-cyan { background: var(--cyan); color: black; }
-    .btn-amber { background: var(--amber); color: black; }
     .btn-danger { background: transparent; border: 1px solid var(--red); color: var(--red); }
     .btn-sm { padding: 0.25rem 0.6rem; font-size: 0.75rem; }
     .input-control { background: #0f172a; border: 1px solid var(--border); color: white; padding: 0.6rem; border-radius: 8px; outline: none; width: 100%; }
@@ -75,9 +72,8 @@
     .table { width: 100%; border-collapse: collapse; text-align: left; }
     .table th, .table td { padding: 0.75rem; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
 
-    /* Modals - strictly display: none unless .active */
+    /* Modals */
     .modal { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 9999; padding: 1rem; }
-    .modal.active { display: flex !important; }
     .modal-box { width: 100%; max-width: 480px; padding: 1.5rem; position: relative; }
     
     .toast-box { position: fixed; top: 1rem; right: 1rem; z-index: 10000; display: flex; flex-direction: column; gap: 0.5rem; }
@@ -88,7 +84,7 @@
 </head>
 <body>
 
-  <!-- Top Navigation -->
+  <!-- Clean User Navigation (NO ADMIN BUTTONS) -->
   <nav class="navbar glass">
     <div class="nav-container">
       <div class="brand" onclick="goView('dashboard')">
@@ -101,11 +97,10 @@
         <button class="nav-btn" id="btn-packages" onclick="goView('packages')"><i class="fa-solid fa-gem"></i> Packages</button>
         <button class="nav-btn" id="btn-deposit" onclick="goView('deposit')"><i class="fa-solid fa-wallet"></i> Deposit</button>
         <button class="nav-btn" id="btn-withdraw" onclick="goView('withdraw')"><i class="fa-solid fa-money-bill-transfer"></i> Withdraw</button>
-        <button class="nav-btn admin-pill" id="btn-admin" onclick="goView('admin')"><i class="fa-solid fa-crown"></i> Admin Panel</button>
       </div>
 
       <div class="text-xs text-muted">
-        User: <span class="text-cyan font-bold" id="topUserEmail">investor@gmail.com</span>
+        Account: <span class="text-cyan font-bold" id="topUserEmail">investor@gmail.com</span>
       </div>
     </div>
   </nav>
@@ -114,23 +109,23 @@
 
   <main class="main-content">
 
-    <!-- VIEW 1: DASHBOARD -->
+    <!-- USER DASHBOARD -->
     <section id="view-dashboard" class="view-panel active">
       <div class="glass p-4 flex-between">
         <div>
           <h2>Welcome, <span class="text-cyan" id="uGreeting">Investor</span>!</h2>
-          <p class="text-muted text-sm">Package Tier: <strong class="text-emerald" id="uTier">FREE TIER</strong></p>
+          <p class="text-muted text-sm">Active Plan: <strong class="text-emerald" id="uTier">FREE TIER</strong></p>
         </div>
         <div style="display:flex; gap:0.5rem;">
-          <button class="btn btn-emerald" onclick="goView('ptc')"><i class="fa-solid fa-coins"></i> Earn Now</button>
-          <button class="btn btn-cyan" onclick="goView('deposit')"><i class="fa-solid fa-plus"></i> Deposit</button>
+          <button class="btn btn-emerald" onclick="goView('ptc')"><i class="fa-solid fa-coins"></i> Watch Ads</button>
+          <button class="btn btn-cyan" onclick="goView('deposit')"><i class="fa-solid fa-plus"></i> Add Funds</button>
         </div>
       </div>
 
       <div class="stats-grid">
         <div class="glass stat-card">
           <div class="stat-title">Available Balance</div>
-          <div class="stat-value text-cyan" id="uBalance">$10.00</div>
+          <div class="stat-value text-cyan" id="uBalance">$0.00</div>
         </div>
         <div class="glass stat-card border-emerald">
           <div class="stat-title">Total Deposited</div>
@@ -151,7 +146,7 @@
         <div class="table-wrap mt-2">
           <table class="table">
             <thead>
-              <tr><th>Type</th><th>Method</th><th>TID</th><th>Amount</th><th>Status</th></tr>
+              <tr><th>Type</th><th>Gateway</th><th>TID</th><th>Amount</th><th>Status</th></tr>
             </thead>
             <tbody id="userTxBody"></tbody>
           </table>
@@ -159,28 +154,29 @@
       </div>
     </section>
 
-    <!-- VIEW 2: PTC ADS -->
+    <!-- PTC ADS -->
     <section id="view-ptc" class="view-panel">
       <div class="flex-between">
         <h2>PTC Ads Portal</h2>
         <div class="glass p-4" style="padding:0.4rem 0.8rem;">
-          Clicks Left: <strong class="text-emerald" id="ptcLeft">5</strong>
+          Clicks Left Today: <strong class="text-emerald" id="ptcLeft">5</strong>
         </div>
       </div>
       <div class="stats-grid mt-4" id="ptcContainer"></div>
     </section>
 
-    <!-- VIEW 3: PACKAGES -->
+    <!-- PACKAGES -->
     <section id="view-packages" class="view-panel">
-      <h2>Investment & VIP Packages</h2>
+      <h2>Investment & Membership Tiers</h2>
+      <p class="text-muted text-sm mt-1">Upgrade your tier to increase daily ad limits and earnings per click.</p>
       <div class="stats-grid mt-4" id="pkgContainer"></div>
     </section>
 
-    <!-- VIEW 4: DEPOSIT -->
+    <!-- DEPOSIT -->
     <section id="view-deposit" class="view-panel">
       <div class="two-col">
         <div class="glass p-4">
-          <h2>Deposit Funds</h2>
+          <h2>Make a Deposit</h2>
           <form onsubmit="onDeposit(event)" class="mt-4">
             <div style="margin-bottom:0.8rem;">
               <label class="text-xs text-muted">Select Gateway</label>
@@ -191,7 +187,7 @@
               </select>
             </div>
             <div style="margin-bottom:0.8rem;">
-              <label class="text-xs text-muted">Deposit Amount ($ USD)</label>
+              <label class="text-xs text-muted">Amount ($ USD)</label>
               <input type="number" id="depAmount" class="input-control" min="5" value="20" required />
             </div>
             <div style="margin-bottom:0.8rem;">
@@ -208,7 +204,7 @@
       </div>
     </section>
 
-    <!-- VIEW 5: WITHDRAW -->
+    <!-- WITHDRAW -->
     <section id="view-withdraw" class="view-panel">
       <div class="glass p-4" style="max-width:550px; margin:0 auto;">
         <h2>Request Withdrawal</h2>
@@ -234,92 +230,9 @@
       </div>
     </section>
 
-    <!-- VIEW 6: MASTER ADMIN -->
-    <section id="view-admin" class="view-panel">
-      <div class="glass p-4 flex-between" style="border-left: 4px solid var(--amber);">
-        <div>
-          <h2><i class="fa-solid fa-crown text-amber"></i> Master Admin Center</h2>
-          <span class="text-xs text-cyan">Live Management: Users, Balance, Deposits, Withdrawals & Packages</span>
-        </div>
-        <button class="btn btn-danger btn-sm" onclick="goView('dashboard')">Exit Admin</button>
-      </div>
-
-      <!-- Admin Tabs -->
-      <div style="display:flex; gap:0.5rem; margin-top:1rem; flex-wrap:wrap;">
-        <button class="btn btn-sm btn-cyan" onclick="adminTab('users')">Users & Balance</button>
-        <button class="btn btn-sm btn-emerald" onclick="adminTab('deposits')">Deposit Queue</button>
-        <button class="btn btn-sm btn-amber" onclick="adminTab('withdrawals')">Withdrawal Queue</button>
-        <button class="btn btn-sm btn-cyan" onclick="adminTab('packages')">Packages</button>
-        <button class="btn btn-sm btn-emerald" onclick="adminTab('ads')">PTC Ads</button>
-      </div>
-
-      <!-- Admin Tab: Users -->
-      <div id="adm-users" class="glass p-4 mt-4 adm-sub active">
-        <h3>User Accounts & Balance Control</h3>
-        <div class="table-wrap mt-2">
-          <table class="table">
-            <thead><tr><th>Email</th><th>Status</th><th>Balance</th><th>Tier</th><th>Action</th></tr></thead>
-            <tbody id="admUsersBody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Admin Tab: Deposits -->
-      <div id="adm-deposits" class="glass p-4 mt-4 adm-sub" style="display:none;">
-        <h3>Pending Deposits</h3>
-        <div class="table-wrap mt-2">
-          <table class="table">
-            <thead><tr><th>User</th><th>Gateway</th><th>TID</th><th>Amount</th><th>Action</th></tr></thead>
-            <tbody id="admDepositsBody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Admin Tab: Withdrawals -->
-      <div id="adm-withdrawals" class="glass p-4 mt-4 adm-sub" style="display:none;">
-        <h3>Pending Withdrawals</h3>
-        <div class="table-wrap mt-2">
-          <table class="table">
-            <thead><tr><th>User</th><th>Account</th><th>Amount</th><th>Action</th></tr></thead>
-            <tbody id="admWithdrawalsBody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Admin Tab: Packages -->
-      <div id="adm-packages" class="glass p-4 mt-4 adm-sub" style="display:none;">
-        <h3>Package Pricing & Limits</h3>
-        <div class="table-wrap mt-2">
-          <table class="table">
-            <thead><tr><th>Name</th><th>Price ($)</th><th>Daily Ads</th><th>Action</th></tr></thead>
-            <tbody id="admPackagesBody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Admin Tab: Ads -->
-      <div id="adm-ads" class="glass p-4 mt-4 adm-sub" style="display:none;">
-        <h3>Add New PTC Ad</h3>
-        <form onsubmit="onAddAd(event)" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:0.5rem; margin-top:0.5rem;">
-          <input type="text" id="adTitle" placeholder="Title" class="input-control" required />
-          <input type="number" id="adReward" step="0.01" placeholder="Reward ($)" class="input-control" required />
-          <input type="number" id="adDuration" placeholder="Duration (s)" class="input-control" required />
-          <button type="submit" class="btn btn-emerald">Publish Ad</button>
-        </form>
-        <h4 class="mt-4">Active Ads</h4>
-        <div class="table-wrap mt-2">
-          <table class="table">
-            <thead><tr><th>Title</th><th>Reward</th><th>Duration</th><th>Action</th></tr></thead>
-            <tbody id="admAdsBody"></tbody>
-          </table>
-        </div>
-      </div>
-
-    </section>
-
   </main>
 
-  <!-- PTC Watch Ad Modal -->
+  <!-- PTC Watch Ad Modal with Real Anti-Bot Math Captcha -->
   <div id="adModal" class="modal" style="display:none;">
     <div class="glass modal-box">
       <div class="flex-between">
@@ -340,21 +253,8 @@
     </div>
   </div>
 
-  <!-- Edit User Balance Modal -->
-  <div id="balModal" class="modal" style="display:none;">
-    <div class="glass modal-box">
-      <h3>Set Exact Balance</h3>
-      <p class="text-xs text-muted mt-2" id="balTargetEmail"></p>
-      <input type="number" step="0.01" id="balNewAmount" class="input-control mt-4" required />
-      <div style="display:flex; gap:0.5rem; margin-top:1rem;">
-        <button class="btn btn-emerald w-full" onclick="saveNewBalance()">Save</button>
-        <button class="btn btn-danger w-full" onclick="closeBalModal()">Cancel</button>
-      </div>
-    </div>
-  </div>
-
-  <footer class="glass" style="margin-top:auto; padding:1rem; text-align:center; font-size:0.75rem; color:var(--muted); border-radius:0;">
-    &copy; 2026 NexusPay. All rights reserved.
+  <footer class="glass" style="margin-top:auto; padding:1.2rem; text-align:center; font-size:0.75rem; color:var(--muted); border-radius:0;">
+    &copy; 2026 NexusPay Financial Technologies. All rights reserved.
   </footer>
 
   <script src="app.js"></script>
