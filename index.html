@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NexusPay | User Portal</title>
+  <title>NexusPay | PTC & Investment Platform</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <style>
     :root {
@@ -33,6 +33,7 @@
     .w-full { width: 100%; }
     .p-4 { padding: 1rem; }
 
+    /* Nav */
     .navbar { padding: 0.8rem 1.5rem; position: sticky; top:0; z-index: 50; }
     .nav-container { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
     .brand { font-size: 1.3rem; font-weight: 800; cursor: pointer; }
@@ -40,13 +41,16 @@
     .nav-btn { background: transparent; border: 1px solid transparent; color: var(--muted); padding: 0.45rem 0.85rem; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem; }
     .nav-btn:hover, .nav-btn.active { color: var(--cyan); background: rgba(255,255,255,0.06); border-color: var(--border); }
 
+    /* Buttons */
     .btn { padding: 0.5rem 1rem; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; font-size: 0.85rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; }
     .btn-emerald { background: var(--emerald); color: #000; }
     .btn-cyan { background: var(--cyan); color: #000; }
+    .btn-amber { background: var(--amber); color: #000; }
     .btn-danger { background: transparent; border: 1px solid var(--red); color: var(--red); }
     .btn-sm { padding: 0.25rem 0.6rem; font-size: 0.75rem; }
     .input-control { background: #0f172a; border: 1px solid var(--border); color: #fff; padding: 0.6rem; border-radius: 8px; outline: none; width: 100%; }
 
+    /* Stats Grid */
     .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-top: 1rem; }
     .stat-card { padding: 1.2rem; border-left: 4px solid var(--cyan); }
     .border-emerald { border-left-color: var(--emerald); }
@@ -55,19 +59,24 @@
     .stat-title { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; }
     .stat-value { font-size: 1.6rem; font-weight: 800; margin-top: 0.2rem; }
 
+    /* Layout */
     .main-content { max-width: 1200px; width: 100%; margin: 1.5rem auto; padding: 0 1rem; flex: 1; }
     .view-panel { display: none; }
     .view-panel.active { display: block; }
     .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
     @media(max-width: 768px) { .two-col { grid-template-columns: 1fr; } }
 
+    /* Tables */
     .table-wrap { overflow-x: auto; width: 100%; }
     .table { width: 100%; border-collapse: collapse; text-align: left; }
     .table th, .table td { padding: 0.75rem; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
 
+    /* Modals */
     .modal { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 9999; padding: 1rem; }
+    .modal.active { display: flex !important; }
     .modal-box { width: 100%; max-width: 480px; padding: 1.5rem; position: relative; }
 
+    /* Toasts */
     .toast-box { position: fixed; top: 1rem; right: 1rem; z-index: 10000; display: flex; flex-direction: column; gap: 0.5rem; }
     .toast { padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.85rem; color: #fff; background: #065f46; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
     .toast-error { background: #991b1b; }
@@ -76,161 +85,329 @@
 </head>
 <body>
 
-  <nav class="navbar glass">
-    <div class="nav-container">
-      <div class="brand" onclick="navigate('dashboard')">
-        <i class="fa-solid fa-bolt text-cyan"></i> NEXUS<span class="text-emerald">PAY</span>
-      </div>
-
-      <div class="nav-links">
-        <button class="nav-btn active" id="btn-dashboard" onclick="navigate('dashboard')"><i class="fa-solid fa-chart-pie"></i> Dashboard</button>
-        <button class="nav-btn" id="btn-ptc" onclick="navigate('ptc')"><i class="fa-solid fa-play"></i> Watch Ads</button>
-        <button class="nav-btn" id="btn-packages" onclick="navigate('packages')"><i class="fa-solid fa-gem"></i> Packages</button>
-        <button class="nav-btn" id="btn-deposit" onclick="navigate('deposit')"><i class="fa-solid fa-wallet"></i> Deposit</button>
-        <button class="nav-btn" id="btn-withdraw" onclick="navigate('withdraw')"><i class="fa-solid fa-money-bill-transfer"></i> Withdraw</button>
-      </div>
-
-      <div style="display:flex; align-items:center; gap:0.6rem;">
-        <span class="text-xs text-muted" id="topUserEmail">user@mail.com</span>
-        <button class="btn btn-sm btn-cyan" onclick="openModal('authModal')"><i class="fa-solid fa-user"></i> Switch / Signup</button>
-      </div>
-    </div>
-  </nav>
-
   <div id="toastBox" class="toast-box"></div>
 
-  <main class="main-content">
-
-    <!-- 1. DASHBOARD -->
-    <section id="view-dashboard" class="view-panel active">
-      <div class="glass p-4 flex-between">
-        <div>
-          <h2>Welcome, <span class="text-cyan" id="uGreeting">Investor</span>!</h2>
-          <p class="text-muted text-sm">Status: <strong id="uStatusBadge" class="text-emerald">Active</strong> | Plan: <strong class="text-cyan" id="uTier">FREE TIER</strong></p>
+  <!-- ==================== 1. USER SECTION ==================== -->
+  <div id="section-user">
+    <nav class="navbar glass">
+      <div class="nav-container">
+        <div class="brand" onclick="userNav('dashboard')">
+          <i class="fa-solid fa-bolt text-cyan"></i> NEXUS<span class="text-emerald">PAY</span>
         </div>
-        <div style="display:flex; gap:0.5rem;">
-          <button class="btn btn-emerald" onclick="navigate('ptc')"><i class="fa-solid fa-coins"></i> Watch Ads</button>
-          <button class="btn btn-cyan" onclick="navigate('deposit')"><i class="fa-solid fa-plus"></i> Add Funds</button>
+
+        <div class="nav-links">
+          <button class="nav-btn active" id="ubtn-dashboard" onclick="userNav('dashboard')"><i class="fa-solid fa-chart-pie"></i> Dashboard</button>
+          <button class="nav-btn" id="ubtn-ptc" onclick="userNav('ptc')"><i class="fa-solid fa-play"></i> Watch Ads</button>
+          <button class="nav-btn" id="ubtn-packages" onclick="userNav('packages')"><i class="fa-solid fa-gem"></i> Packages</button>
+          <button class="nav-btn" id="ubtn-deposit" onclick="userNav('deposit')"><i class="fa-solid fa-wallet"></i> Deposit</button>
+          <button class="nav-btn" id="ubtn-withdraw" onclick="userNav('withdraw')"><i class="fa-solid fa-money-bill-transfer"></i> Withdraw</button>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:0.6rem;">
+          <span class="text-xs text-muted" id="topUserEmail">user@mail.com</span>
+          <button class="btn btn-sm btn-cyan" onclick="openModal('authModal')"><i class="fa-solid fa-user"></i> Switch / Signup</button>
         </div>
       </div>
+    </nav>
 
-      <div class="stats-grid">
-        <div class="glass stat-card">
-          <div class="stat-title">Available Balance</div>
-          <div class="stat-value text-cyan" id="uBalance">$0.00</div>
+    <main class="main-content">
+      <!-- USER TAB: DASHBOARD -->
+      <section id="uview-dashboard" class="view-panel active">
+        <div class="glass p-4 flex-between">
+          <div>
+            <h2>Welcome, <span class="text-cyan" id="uGreeting">Investor</span>!</h2>
+            <p class="text-muted text-sm">Status: <strong id="uStatusBadge" class="text-emerald">Active</strong> | Plan: <strong class="text-cyan" id="uTier">FREE TIER</strong></p>
+          </div>
+          <div style="display:flex; gap:0.5rem;">
+            <button class="btn btn-emerald" onclick="userNav('ptc')"><i class="fa-solid fa-coins"></i> Watch Ads</button>
+            <button class="btn btn-cyan" onclick="userNav('deposit')"><i class="fa-solid fa-plus"></i> Add Funds</button>
+          </div>
         </div>
-        <div class="glass stat-card border-emerald">
-          <div class="stat-title">Total Deposited</div>
-          <div class="stat-value text-emerald" id="uDeposited">$0.00</div>
-        </div>
-        <div class="glass stat-card border-purple">
-          <div class="stat-title">Total Withdrawn</div>
-          <div class="stat-value" id="uWithdrawn">$0.00</div>
-        </div>
-        <div class="glass stat-card border-amber">
-          <div class="stat-title">Today's Clicks</div>
-          <div class="stat-value"><span id="uClicks">0</span> / <span id="uMaxClicks">5</span></div>
-        </div>
-      </div>
 
-      <div class="glass p-4" style="margin-top:1.5rem;">
-        <h3><i class="fa-solid fa-clock-rotate-left text-cyan"></i> Transaction Ledger</h3>
-        <div class="table-wrap mt-2">
-          <table class="table">
-            <thead>
-              <tr><th>Type</th><th>Gateway</th><th>TID</th><th>Amount</th><th>Status</th></tr>
-            </thead>
-            <tbody id="userTxBody"></tbody>
-          </table>
+        <div class="stats-grid">
+          <div class="glass stat-card">
+            <div class="stat-title">Available Balance</div>
+            <div class="stat-value text-cyan" id="uBalance">$0.00</div>
+          </div>
+          <div class="glass stat-card border-emerald">
+            <div class="stat-title">Total Deposited</div>
+            <div class="stat-value text-emerald" id="uDeposited">$0.00</div>
+          </div>
+          <div class="glass stat-card border-purple">
+            <div class="stat-title">Total Withdrawn</div>
+            <div class="stat-value text-purple" id="uWithdrawn">$0.00</div>
+          </div>
+          <div class="glass stat-card border-amber">
+            <div class="stat-title">Today's Clicks</div>
+            <div class="stat-value"><span id="uClicks">0</span> / <span id="uMaxClicks">5</span></div>
+          </div>
         </div>
-      </div>
-    </section>
 
-    <!-- 2. PTC ADS -->
-    <section id="view-ptc" class="view-panel">
-      <div class="flex-between">
-        <h2>PTC Ads Portal</h2>
-        <div class="glass p-4" style="padding:0.4rem 0.8rem;">
-          Clicks Left: <strong class="text-emerald" id="ptcLeft">5</strong>
+        <div class="glass p-4 mt-4">
+          <h3><i class="fa-solid fa-clock-rotate-left text-cyan"></i> Transaction Ledger</h3>
+          <div class="table-wrap mt-2">
+            <table class="table">
+              <thead>
+                <tr><th>Type</th><th>Gateway</th><th>TID</th><th>Amount</th><th>Status</th></tr>
+              </thead>
+              <tbody id="userTxBody"></tbody>
+            </table>
+          </div>
         </div>
-      </div>
-      <div class="stats-grid mt-4" id="ptcContainer"></div>
-    </section>
+      </section>
 
-    <!-- 3. PACKAGES -->
-    <section id="view-packages" class="view-panel">
-      <h2>Investment & Membership Tiers</h2>
-      <div class="stats-grid mt-4" id="pkgContainer"></div>
-    </section>
+      <!-- USER TAB: PTC ADS -->
+      <section id="uview-ptc" class="view-panel">
+        <div class="flex-between">
+          <h2>PTC Ads Portal</h2>
+          <div class="glass p-4" style="padding:0.4rem 0.8rem;">
+            Clicks Left: <strong class="text-emerald" id="ptcLeft">5</strong>
+          </div>
+        </div>
+        <div class="stats-grid mt-4" id="ptcContainer"></div>
+      </section>
 
-    <!-- 4. DEPOSIT -->
-    <section id="view-deposit" class="view-panel">
-      <div class="two-col">
-        <div class="glass p-4">
-          <h2>Make a Deposit</h2>
-          <form onsubmit="submitDeposit(event)" class="mt-4">
+      <!-- USER TAB: PACKAGES -->
+      <section id="uview-packages" class="view-panel">
+        <h2>Investment & Membership Tiers</h2>
+        <div class="stats-grid mt-4" id="pkgContainer"></div>
+      </section>
+
+      <!-- USER TAB: DEPOSIT -->
+      <section id="uview-deposit" class="view-panel">
+        <div class="two-col">
+          <div class="glass p-4">
+            <h2>Make a Deposit</h2>
+            <form onsubmit="handleDepositSubmit(event)" class="mt-4">
+              <div style="margin-bottom:0.8rem;">
+                <label class="text-xs text-muted">Select Gateway</label>
+                <select id="depGateway" class="input-control" onchange="renderGatewayInfo()">
+                  <option value="jazzcash">JazzCash</option>
+                  <option value="easypaisa">Easypaisa</option>
+                  <option value="usdt">USDT TRC-20</option>
+                </select>
+              </div>
+              <div style="margin-bottom:0.8rem;">
+                <label class="text-xs text-muted">Amount ($ USD)</label>
+                <input type="number" id="depAmount" class="input-control" min="1" value="20" required />
+              </div>
+              <div style="margin-bottom:0.8rem;">
+                <label class="text-xs text-muted">Transaction ID (TID) / Proof</label>
+                <input type="text" id="depTID" class="input-control" placeholder="e.g. JC-9921448" required />
+              </div>
+              <button type="submit" class="btn btn-emerald w-full mt-2">Submit Deposit</button>
+            </form>
+          </div>
+          <div class="glass p-4">
+            <h3>Payment Gateway Info (From Admin)</h3>
+            <div id="gatewayInfoBox" class="mt-4 text-sm"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- USER TAB: WITHDRAW -->
+      <section id="uview-withdraw" class="view-panel">
+        <div class="glass p-4" style="max-width:550px; margin:0 auto;">
+          <h2>Request Withdrawal</h2>
+          <p class="text-xs text-muted mt-1">Minimum payout threshold: <strong class="text-amber" id="minWithdrawalLabel">$45.00</strong></p>
+          <form onsubmit="handleWithdrawSubmit(event)" class="mt-4">
             <div style="margin-bottom:0.8rem;">
-              <label class="text-xs text-muted">Select Gateway</label>
-              <select id="depGateway" class="input-control" onchange="renderGatewayInfo()">
-                <option value="jazzcash">JazzCash</option>
-                <option value="easypaisa">Easypaisa</option>
-                <option value="usdt">USDT TRC-20</option>
+              <label class="text-xs text-muted">Method</label>
+              <select id="wthGateway" class="input-control">
+                <option value="JazzCash">JazzCash</option>
+                <option value="Easypaisa">Easypaisa</option>
+                <option value="USDT">USDT (TRC-20)</option>
               </select>
             </div>
             <div style="margin-bottom:0.8rem;">
-              <label class="text-xs text-muted">Amount ($ USD)</label>
-              <input type="number" id="depAmount" class="input-control" min="1" value="20" required />
+              <label class="text-xs text-muted">Your Receiving Account Number / Wallet</label>
+              <input type="text" id="wthAccount" class="input-control" placeholder="0300... or Tron Address" required />
             </div>
             <div style="margin-bottom:0.8rem;">
-              <label class="text-xs text-muted">Transaction ID (TID) / Proof</label>
-              <input type="text" id="depTID" class="input-control" placeholder="e.g. JC-9921448" required />
+              <label class="text-xs text-muted">Amount ($ USD)</label>
+              <input type="number" id="wthAmount" class="input-control" step="0.01" required />
             </div>
-            <button type="submit" class="btn btn-emerald w-full mt-2">Submit Deposit</button>
+            <button type="submit" class="btn btn-cyan w-full mt-2">Confirm Withdrawal</button>
           </form>
         </div>
-        <div class="glass p-4">
-          <h3>Payment Gateway Info (From Admin)</h3>
-          <div id="gatewayInfoBox" class="mt-4 text-sm"></div>
+      </section>
+    </main>
+
+    <footer class="glass" style="margin-top:auto; padding:1.2rem; text-align:center; font-size:0.75rem; color:var(--muted); border-radius:0;">
+      &copy; 2026 NexusPay. All rights reserved. 
+      <span onclick="triggerAdminPinModal()" style="cursor:pointer; opacity:0.3; margin-left:10px;">[•]</span>
+    </footer>
+  </div>
+
+  <!-- ==================== 2. ADMIN SECTION ==================== -->
+  <div id="section-admin" style="display:none;">
+    <header class="glass admin-bar flex-between" style="padding:1rem 1.5rem; border-left:4px solid var(--amber);">
+      <div>
+        <h2><i class="fa-solid fa-crown text-amber"></i> Master Admin Control Panel</h2>
+        <span class="text-xs text-cyan">A-Z System Controller</span>
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="exitAdmin()"><i class="fa-solid fa-arrow-left"></i> Exit Admin Mode</button>
+    </header>
+
+    <main class="main-content">
+      <div class="stats-grid">
+        <div class="glass stat-card">
+          <div class="stat-title">Platform Users</div>
+          <div class="stat-value text-cyan" id="mUsers">0</div>
+        </div>
+        <div class="glass stat-card" style="border-left-color: var(--emerald);">
+          <div class="stat-title">Approved Deposits</div>
+          <div class="stat-value text-emerald" id="mDeposits">$0.00</div>
+        </div>
+        <div class="glass stat-card" style="border-left-color: var(--amber);">
+          <div class="stat-title">Pending Withdrawals</div>
+          <div class="stat-value text-amber" id="mWithdrawals">$0.00</div>
+        </div>
+        <div class="glass stat-card" style="border-left-color: #a855f7;">
+          <div class="stat-title">Pending Signups</div>
+          <div class="stat-value text-purple" id="mPendingSignups">0</div>
         </div>
       </div>
-    </section>
 
-    <!-- 5. WITHDRAW -->
-    <section id="view-withdraw" class="view-panel">
-      <div class="glass p-4" style="max-width:550px; margin:0 auto;">
-        <h2>Request Withdrawal</h2>
-        <form onsubmit="submitWithdraw(event)" class="mt-4">
-          <div style="margin-bottom:0.8rem;">
-            <label class="text-xs text-muted">Method</label>
-            <select id="wthGateway" class="input-control">
-              <option value="JazzCash">JazzCash</option>
-              <option value="Easypaisa">Easypaisa</option>
-              <option value="USDT">USDT (TRC-20)</option>
-            </select>
-          </div>
-          <div style="margin-bottom:0.8rem;">
-            <label class="text-xs text-muted">Account Number / Wallet</label>
-            <input type="text" id="wthAccount" class="input-control" placeholder="0300... or Tron Address" required />
-          </div>
-          <div style="margin-bottom:0.8rem;">
-            <label class="text-xs text-muted">Amount ($)</label>
-            <input type="number" id="wthAmount" class="input-control" min="1" placeholder="Min $1" required />
-          </div>
-          <button type="submit" class="btn btn-cyan w-full mt-2">Confirm Withdrawal</button>
-        </form>
+      <!-- Admin Tabs Navigation -->
+      <div style="display:flex; gap:0.5rem; margin-top:1.5rem; flex-wrap:wrap;">
+        <button class="btn btn-sm btn-cyan" onclick="adminNav('users')"><i class="fa-solid fa-users"></i> Users & Balance</button>
+        <button class="btn btn-sm btn-amber" onclick="adminNav('settings')"><i class="fa-solid fa-sliders"></i> Platform Settings</button>
+        <button class="btn btn-sm btn-emerald" onclick="adminNav('gateways')"><i class="fa-solid fa-wallet"></i> Payment Gateways</button>
+        <button class="btn btn-sm btn-emerald" onclick="adminNav('deposits')"><i class="fa-solid fa-inbox"></i> Deposit Queue</button>
+        <button class="btn btn-sm btn-amber" onclick="adminNav('withdrawals')"><i class="fa-solid fa-hand-holding-dollar"></i> Withdrawal Queue</button>
+        <button class="btn btn-sm btn-cyan" onclick="adminNav('packages')"><i class="fa-solid fa-gem"></i> Packages</button>
+        <button class="btn btn-sm btn-emerald" onclick="adminNav('ads')"><i class="fa-solid fa-bullhorn"></i> PTC Ads</button>
       </div>
-    </section>
 
-  </main>
+      <!-- ADMIN TAB 1: USERS -->
+      <div id="aview-users" class="glass p-4 mt-4 adm-view active">
+        <h3>User Accounts & Direct Balance Controller</h3>
+        <div class="table-wrap mt-4">
+          <table class="table">
+            <thead><tr><th>Name & Email</th><th>Status</th><th>Balance</th><th>Plan</th><th>Actions</th></tr></thead>
+            <tbody id="admUsersList"></tbody>
+          </table>
+        </div>
+      </div>
 
-  <!-- MODAL: REGISTRATION -->
+      <!-- ADMIN TAB 2: PLATFORM SETTINGS (WITHDRAWAL LIMIT EDIT) -->
+      <div id="aview-settings" class="glass p-4 mt-4 adm-view" style="display:none;">
+        <h3>Platform Financial Rules & Limits</h3>
+        <p class="text-xs text-muted">Set global constraints for deposits and payouts.</p>
+        <div style="max-width:500px; margin-top:1rem;">
+          <div class="glass p-4" style="border: 1px solid var(--amber);">
+            <h4 class="text-amber"><i class="fa-solid fa-shield"></i> Withdrawal Threshold</h4>
+            <div style="margin-top:1rem;">
+              <label class="text-xs text-muted">Minimum Withdrawal Amount ($ USD)</label>
+              <input type="number" id="admMinWithdrawInput" step="0.5" min="1" class="input-control mt-1" />
+            </div>
+            <button class="btn btn-amber btn-sm w-full mt-4" onclick="adminSavePlatformSettings()">Save Withdrawal Limit</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ADMIN TAB 3: GATEWAYS -->
+      <div id="aview-gateways" class="glass p-4 mt-4 adm-view" style="display:none;">
+        <h3>Configure Receiving Payment Numbers</h3>
+        <p class="text-xs text-muted">Values changed here update the user deposit screen instantly.</p>
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:1rem; margin-top:1rem;">
+          <div class="glass p-4" style="border: 1px solid var(--amber);">
+            <h4 class="text-amber">JazzCash Pakistan</h4>
+            <div style="margin-top:0.5rem;"><label class="text-xs text-muted">Account Number</label><input type="text" id="gw_jazzcash_num" class="input-control" /></div>
+            <div style="margin-top:0.5rem;"><label class="text-xs text-muted">Account Title</label><input type="text" id="gw_jazzcash_tit" class="input-control" /></div>
+            <button class="btn btn-amber btn-sm w-full mt-4" onclick="adminSaveGateway('jazzcash')">Save JazzCash</button>
+          </div>
+          <div class="glass p-4" style="border: 1px solid var(--emerald);">
+            <h4 class="text-emerald">Easypaisa Pakistan</h4>
+            <div style="margin-top:0.5rem;"><label class="text-xs text-muted">Account Number</label><input type="text" id="gw_easypaisa_num" class="input-control" /></div>
+            <div style="margin-top:0.5rem;"><label class="text-xs text-muted">Account Title</label><input type="text" id="gw_easypaisa_tit" class="input-control" /></div>
+            <button class="btn btn-emerald btn-sm w-full mt-4" onclick="adminSaveGateway('easypaisa')">Save Easypaisa</button>
+          </div>
+          <div class="glass p-4" style="border: 1px solid var(--cyan);">
+            <h4 class="text-cyan">USDT (TRC-20)</h4>
+            <div style="margin-top:0.5rem;"><label class="text-xs text-muted">Wallet Address</label><input type="text" id="gw_usdt_num" class="input-control" /></div>
+            <div style="margin-top:0.5rem;"><label class="text-xs text-muted">Title / Exchange</label><input type="text" id="gw_usdt_tit" class="input-control" /></div>
+            <button class="btn btn-cyan btn-sm w-full mt-4" onclick="adminSaveGateway('usdt')">Save USDT</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ADMIN TAB 4: DEPOSITS -->
+      <div id="aview-deposits" class="glass p-4 mt-4 adm-view" style="display:none;">
+        <h3>Pending Deposit Verifications</h3>
+        <div class="table-wrap mt-4">
+          <table class="table">
+            <thead><tr><th>User</th><th>Gateway</th><th>TID</th><th>Amount</th><th>Action</th></tr></thead>
+            <tbody id="admDepositsList"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ADMIN TAB 5: WITHDRAWALS -->
+      <div id="aview-withdrawals" class="glass p-4 mt-4 adm-view" style="display:none;">
+        <h3>Pending Withdrawal Requests</h3>
+        <div class="table-wrap mt-4">
+          <table class="table">
+            <thead><tr><th>User</th><th>Account</th><th>Amount</th><th>Action</th></tr></thead>
+            <tbody id="admWithdrawalsList"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ADMIN TAB 6: PACKAGES -->
+      <div id="aview-packages" class="glass p-4 mt-4 adm-view" style="display:none;">
+        <h3>Packages Configuration</h3>
+        <div class="table-wrap mt-4">
+          <table class="table">
+            <thead><tr><th>Plan</th><th>Price ($)</th><th>Daily Ads</th><th>Earn/Ad ($)</th><th>Action</th></tr></thead>
+            <tbody id="admPackagesList"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ADMIN TAB 7: ADS -->
+      <div id="aview-ads" class="glass p-4 mt-4 adm-view" style="display:none;">
+        <h3>Publish Sponsored Ad</h3>
+        <form onsubmit="adminAddAd(event)" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:0.5rem; margin-top:0.5rem;">
+          <input type="text" id="newAdTitle" placeholder="Ad Title" class="input-control" required />
+          <input type="number" id="newAdReward" step="0.01" placeholder="Reward ($)" class="input-control" required />
+          <input type="number" id="newAdDuration" placeholder="Duration (s)" class="input-control" required />
+          <button type="submit" class="btn btn-emerald">Add Campaign</button>
+        </form>
+        <div class="table-wrap" style="margin-top:1.5rem;">
+          <table class="table">
+            <thead><tr><th>Title</th><th>Reward</th><th>Duration</th><th>Action</th></tr></thead>
+            <tbody id="admAdsList"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ==================== MODALS ==================== -->
+  <div id="adminPinModal" class="modal">
+    <div class="glass modal-box" style="text-align:center;">
+      <i class="fa-solid fa-shield-halved text-cyan" style="font-size:2.5rem;"></i>
+      <h3 style="margin-top:1rem;">Master Admin Security</h3>
+      <p class="text-xs text-muted mt-2">Enter PIN (778899) to unlock control console</p>
+      <form onsubmit="verifyAdminPin(event)" class="mt-4">
+        <input type="password" id="inputAdminPin" class="input-control" style="text-align:center; font-size:1.2rem; letter-spacing:4px;" placeholder="PIN" required />
+        <div style="display:flex; gap:0.5rem; margin-top:1rem;">
+          <button type="submit" class="btn btn-cyan w-full">Unlock</button>
+          <button type="button" class="btn btn-danger w-full" onclick="closeModal('adminPinModal')">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <div id="authModal" class="modal">
     <div class="glass modal-box">
       <div class="flex-between">
-        <h3>User Registration</h3>
+        <h3>User Registration / Switch</h3>
         <button class="btn btn-danger btn-sm" onclick="closeModal('authModal')">&times;</button>
       </div>
-      <form onsubmit="registerUser(event)" class="mt-4">
+      <form onsubmit="handleUserRegister(event)" class="mt-4">
         <div style="margin-bottom:0.8rem;">
           <label class="text-xs text-muted">Full Name</label>
           <input type="text" id="regName" class="input-control" placeholder="e.g. Ali Raza" required />
@@ -239,12 +416,11 @@
           <label class="text-xs text-muted">Email Address</label>
           <input type="email" id="regEmail" class="input-control" placeholder="user@gmail.com" required />
         </div>
-        <button type="submit" class="btn btn-emerald w-full mt-2">Register / Login</button>
+        <button type="submit" class="btn btn-emerald w-full mt-2">Submit</button>
       </form>
     </div>
   </div>
 
-  <!-- MODAL: PTC AD VIEWER -->
   <div id="adModal" class="modal">
     <div class="glass modal-box">
       <div class="flex-between">
@@ -265,22 +441,21 @@
     </div>
   </div>
 
-  <footer class="glass" style="margin-top:auto; padding:1.2rem; text-align:center; font-size:0.75rem; color:var(--muted); border-radius:0;">
-    &copy; 2026 NexusPay. All rights reserved.
-  </footer>
-
   <script>
-    const STORAGE_KEY = "NEXUS_STATE";
+    const STORE_KEY = "NEXUS_ALL_DATA_V2";
 
-    function getState() {
-      const raw = localStorage.getItem(STORAGE_KEY);
+    function getData() {
+      const raw = localStorage.getItem(STORE_KEY);
       if (raw) {
-        try { return JSON.parse(raw); } catch (e) {}
+        try { return JSON.parse(raw); } catch(e){}
       }
       const initial = {
-        currentUserEmail: "investor@gmail.com",
+        activeUser: "investor@gmail.com",
+        settings: {
+          minWithdrawal: 45.00
+        },
         users: [
-          { name: "Muhammad Anwar", email: "investor@gmail.com", balance: 25.00, totalDeposit: 0.0, totalWithdraw: 0.0, clicks: 0, package: "free", status: "active" },
+          { name: "Muhammad Anwar", email: "investor@gmail.com", balance: 65.00, totalDeposit: 0.0, totalWithdraw: 0.0, clicks: 0, package: "free", status: "active" },
           { name: "Ayesha Malik", email: "ayesha@mail.com", balance: 0.00, totalDeposit: 0.0, totalWithdraw: 0.0, clicks: 0, package: "free", status: "pending" }
         ],
         gateways: {
@@ -302,34 +477,40 @@
           { id: "DEP-101", user: "investor@gmail.com", type: "deposit", method: "JAZZCASH", tid: "JC-9921448", amount: 20.00, status: "approved" }
         ]
       };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(initial));
+      localStorage.setItem(STORE_KEY, JSON.stringify(initial));
       return initial;
     }
 
-    function saveState(s) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+    function saveData(d) {
+      localStorage.setItem(STORE_KEY, JSON.stringify(d));
     }
 
     let activeAd = null;
     let timerObj = null;
     let mathResult = 0;
 
-    function navigate(tabId) {
+    function userNav(tab) {
       document.querySelectorAll(".view-panel").forEach(p => p.classList.remove("active"));
       document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
-      const p = document.getElementById("view-" + tabId);
-      const b = document.getElementById("btn-" + tabId);
+      const p = document.getElementById("uview-" + tab);
+      const b = document.getElementById("ubtn-" + tab);
       if (p) p.classList.add("active");
       if (b) b.classList.add("active");
     }
 
-    function syncUI() {
-      const state = getState();
-      let user = state.users.find(u => u.email === state.currentUserEmail);
+    function adminNav(tab) {
+      document.querySelectorAll(".adm-view").forEach(v => v.style.display = "none");
+      const v = document.getElementById("aview-" + tab);
+      if (v) v.style.display = "block";
+    }
+
+    function renderUserPortal() {
+      const d = getData();
+      let user = d.users.find(u => u.email === d.activeUser);
       if (!user) {
-        user = state.users[0];
-        state.currentUserEmail = user.email;
-        saveState(state);
+        user = d.users[0];
+        d.activeUser = user.email;
+        saveData(d);
       }
 
       document.getElementById("uBalance").textContent = "$" + user.balance.toFixed(2);
@@ -343,14 +524,19 @@
       st.textContent = user.status.toUpperCase();
       st.style.color = user.status === "active" ? "#10b981" : "#f59e0b";
 
-      const pkg = state.packages.find(p => p.id === user.package) || state.packages[0];
+      const pkg = d.packages.find(p => p.id === user.package) || d.packages[0];
       document.getElementById("uTier").textContent = pkg.name.toUpperCase();
       document.getElementById("uMaxClicks").textContent = pkg.dailyAds;
       document.getElementById("ptcLeft").textContent = Math.max(0, pkg.dailyAds - user.clicks);
 
-      // Render PTC Ads
-      const ptcBox = document.getElementById("ptcContainer");
-      ptcBox.innerHTML = state.ads.map(a => `
+      // Minimum Withdrawal Display on User View
+      const minVal = (d.settings && d.settings.minWithdrawal) ? d.settings.minWithdrawal : 45.00;
+      document.getElementById("minWithdrawalLabel").textContent = "$" + minVal.toFixed(2);
+      document.getElementById("wthAmount").placeholder = "Minimum $" + minVal.toFixed(2);
+      document.getElementById("wthAmount").min = minVal;
+
+      // PTC Container
+      document.getElementById("ptcContainer").innerHTML = d.ads.map(a => `
         <div class="glass stat-card">
           <div class="stat-title">${a.duration}s Timer</div>
           <div class="font-bold mt-2">${a.title}</div>
@@ -359,9 +545,8 @@
         </div>
       `).join("");
 
-      // Render Packages
-      const pkgBox = document.getElementById("pkgContainer");
-      pkgBox.innerHTML = state.packages.map(p => `
+      // Packages Container
+      document.getElementById("pkgContainer").innerHTML = d.packages.map(p => `
         <div class="glass stat-card">
           <div class="font-bold text-cyan">${p.name}</div>
           <div class="stat-value text-emerald">${p.price === 0 ? "FREE" : "$" + p.price}</div>
@@ -372,9 +557,8 @@
         </div>
       `).join("");
 
-      // Render Ledger
-      const txBox = document.getElementById("userTxBody");
-      txBox.innerHTML = state.transactions.map(t => `
+      // Transactions Ledger
+      document.getElementById("userTxBody").innerHTML = d.transactions.map(t => `
         <tr>
           <td><strong>${t.type.toUpperCase()}</strong></td>
           <td>${t.method}</td>
@@ -388,9 +572,9 @@
     }
 
     function renderGatewayInfo() {
-      const state = getState();
+      const d = getData();
       const g = document.getElementById("depGateway").value;
-      const info = state.gateways[g];
+      const info = d.gateways[g];
       document.getElementById("gatewayInfoBox").innerHTML = `
         <strong class="text-emerald">${info.title}</strong><br>
         Account / Wallet Address:<br>
@@ -399,20 +583,241 @@
       `;
     }
 
+    function renderAdminPortal() {
+      const d = getData();
+
+      document.getElementById("mUsers").textContent = d.users.length;
+      const depTotal = d.transactions.filter(t => t.type === 'deposit' && t.status === 'approved').reduce((a, b) => a + b.amount, 0);
+      document.getElementById("mDeposits").textContent = "$" + depTotal.toFixed(2);
+      const wthTotal = d.transactions.filter(t => t.type === 'withdraw' && t.status === 'pending').reduce((a, b) => a + b.amount, 0);
+      document.getElementById("mWithdrawals").textContent = "$" + wthTotal.toFixed(2);
+      document.getElementById("mPendingSignups").textContent = d.users.filter(u => u.status === 'pending').length;
+
+      // Setting Inputs
+      document.getElementById("admMinWithdrawInput").value = (d.settings && d.settings.minWithdrawal) ? d.settings.minWithdrawal : 45.00;
+
+      // 1. Users
+      document.getElementById("admUsersList").innerHTML = d.users.map(u => `
+        <tr>
+          <td><strong>${u.name}</strong><br><span class="text-xs text-muted">${u.email}</span></td>
+          <td><span style="color:${u.status === 'active' ? '#10b981' : '#f59e0b'}; font-weight:700;">${u.status.toUpperCase()}</span></td>
+          <td class="font-bold text-emerald">$${u.balance.toFixed(2)}</td>
+          <td>${u.package.toUpperCase()}</td>
+          <td>
+            <button class="btn btn-sm btn-cyan" onclick="adminEditBalance('${u.email}')">Edit Balance</button>
+            ${u.status === 'pending' ? `<button class="btn btn-sm btn-emerald" onclick="adminSetStatus('${u.email}', 'active')">Approve</button>` : ''}
+            ${u.status === 'active' ? `<button class="btn btn-sm btn-danger" onclick="adminSetStatus('${u.email}', 'suspended')">Ban</button>` : `<button class="btn btn-sm btn-emerald" onclick="adminSetStatus('${u.email}', 'active')">Activate</button>`}
+          </td>
+        </tr>
+      `).join("");
+
+      // 2. Gateway Inputs
+      document.getElementById("gw_jazzcash_num").value = d.gateways.jazzcash.account;
+      document.getElementById("gw_jazzcash_tit").value = d.gateways.jazzcash.name;
+      document.getElementById("gw_easypaisa_num").value = d.gateways.easypaisa.account;
+      document.getElementById("gw_easypaisa_tit").value = d.gateways.easypaisa.name;
+      document.getElementById("gw_usdt_num").value = d.gateways.usdt.account;
+      document.getElementById("gw_usdt_tit").value = d.gateways.usdt.name;
+
+      // 3. Deposits
+      const deps = d.transactions.filter(t => t.type === "deposit" && t.status === "pending");
+      document.getElementById("admDepositsList").innerHTML = deps.length ? deps.map(x => `
+        <tr>
+          <td>${x.user}</td>
+          <td>${x.method}</td>
+          <td class="text-cyan font-bold">${x.tid}</td>
+          <td class="font-bold text-emerald">$${x.amount.toFixed(2)}</td>
+          <td>
+            <button class="btn btn-sm btn-emerald" onclick="adminApproveDeposit('${x.id}', true)">Approve</button>
+            <button class="btn btn-sm btn-danger" onclick="adminApproveDeposit('${x.id}', false)">Reject</button>
+          </td>
+        </tr>
+      `).join("") : `<tr><td colspan="5" class="text-muted">No pending deposit requests.</td></tr>`;
+
+      // 4. Withdrawals
+      const wths = d.transactions.filter(t => t.type === "withdraw" && t.status === "pending");
+      document.getElementById("admWithdrawalsList").innerHTML = wths.length ? wths.map(x => `
+        <tr>
+          <td>${x.user}</td>
+          <td>${x.method}</td>
+          <td class="font-bold text-cyan">$${x.amount.toFixed(2)}</td>
+          <td>
+            <button class="btn btn-sm btn-emerald" onclick="adminApproveWithdrawal('${x.id}', true)">Mark Paid</button>
+            <button class="btn btn-sm btn-danger" onclick="adminApproveWithdrawal('${x.id}', false)">Refund</button>
+          </td>
+        </tr>
+      `).join("") : `<tr><td colspan="4" class="text-muted">No pending withdrawal requests.</td></tr>`;
+
+      // 5. Packages
+      document.getElementById("admPackagesList").innerHTML = d.packages.map((p, i) => `
+        <tr>
+          <td><strong>${p.name}</strong></td>
+          <td><input type="number" id="ap_prc_${i}" value="${p.price}" class="input-control" style="max-width:80px;" /></td>
+          <td><input type="number" id="ap_ads_${i}" value="${p.dailyAds}" class="input-control" style="max-width:80px;" /></td>
+          <td><input type="number" step="0.01" id="ap_rew_${i}" value="${p.reward}" class="input-control" style="max-width:80px;" /></td>
+          <td><button class="btn btn-sm btn-emerald" onclick="adminSavePackage(${i})">Save</button></td>
+        </tr>
+      `).join("");
+
+      // 6. Ads
+      document.getElementById("admAdsList").innerHTML = d.ads.map(a => `
+        <tr>
+          <td>${a.title}</td>
+          <td class="font-bold text-emerald">$${a.reward}</td>
+          <td>${a.duration}s</td>
+          <td><button class="btn btn-sm btn-danger" onclick="adminDelAd(${a.id})">Delete</button></td>
+        </tr>
+      `).join("");
+    }
+
+    function adminSavePlatformSettings() {
+      const d = getData();
+      const val = parseFloat(document.getElementById("admMinWithdrawInput").value);
+      if (isNaN(val) || val <= 0) {
+        notify("Please enter a valid amount!", "error");
+        return;
+      }
+      if (!d.settings) d.settings = {};
+      d.settings.minWithdrawal = val;
+      saveData(d);
+      notify(`Minimum withdrawal updated to $${val.toFixed(2)}!`, "success");
+    }
+
+    function triggerAdminPinModal() {
+      openModal("adminPinModal");
+    }
+
+    function verifyAdminPin(e) {
+      e.preventDefault();
+      const pin = document.getElementById("inputAdminPin").value;
+      if (pin === "778899") {
+        closeModal("adminPinModal");
+        document.getElementById("section-user").style.display = "none";
+        document.getElementById("section-admin").style.display = "block";
+        renderAdminPortal();
+        notify("Master Admin Portal Unlocked!", "success");
+      } else {
+        notify("Invalid PIN code!", "error");
+      }
+    }
+
+    function exitAdmin() {
+      document.getElementById("section-admin").style.display = "none";
+      document.getElementById("section-user").style.display = "block";
+      renderUserPortal();
+    }
+
+    function adminEditBalance(email) {
+      const d = getData();
+      const u = d.users.find(x => x.email === email);
+      const val = prompt(`Set exact balance for ${email}:`, u.balance.toFixed(2));
+      if (val !== null && !isNaN(parseFloat(val))) {
+        u.balance = parseFloat(val);
+        saveData(d);
+        renderAdminPortal();
+        notify("Balance updated!", "success");
+      }
+    }
+
+    function adminSetStatus(email, st) {
+      const d = getData();
+      const u = d.users.find(x => x.email === email);
+      u.status = st;
+      saveData(d);
+      renderAdminPortal();
+      notify(`Status set to ${st}!`, "info");
+    }
+
+    function adminSaveGateway(key) {
+      const d = getData();
+      d.gateways[key].account = document.getElementById(`gw_${key}_num`).value.trim();
+      d.gateways[key].name = document.getElementById(`gw_${key}_tit`).value.trim();
+      saveData(d);
+      notify(`Updated ${d.gateways[key].title}!`, "success");
+    }
+
+    function adminApproveDeposit(id, ok) {
+      const d = getData();
+      const t = d.transactions.find(x => x.id === id);
+      t.status = ok ? "approved" : "rejected";
+      if (ok) {
+        const u = d.users.find(x => x.email === t.user);
+        if (u) {
+          u.balance += t.amount;
+          u.totalDeposit += t.amount;
+        }
+        notify(`Deposit Approved! $${t.amount} added.`, "success");
+      } else {
+        notify("Deposit Rejected.", "info");
+      }
+      saveData(d);
+      renderAdminPortal();
+    }
+
+    function adminApproveWithdrawal(id, ok) {
+      const d = getData();
+      const t = d.transactions.find(x => x.id === id);
+      t.status = ok ? "approved" : "rejected";
+      if (!ok) {
+        const u = d.users.find(x => x.email === t.user);
+        if (u) u.balance += t.amount;
+        notify("Withdrawal Rejected & Refunded.", "info");
+      } else {
+        const u = d.users.find(x => x.email === t.user);
+        if (u) u.totalWithdraw += t.amount;
+        notify("Withdrawal Marked Paid!", "success");
+      }
+      saveData(d);
+      renderAdminPortal();
+    }
+
+    function adminSavePackage(i) {
+      const d = getData();
+      d.packages[i].price = parseFloat(document.getElementById(`ap_prc_${i}`).value);
+      d.packages[i].dailyAds = parseInt(document.getElementById(`ap_ads_${i}`).value, 10);
+      d.packages[i].reward = parseFloat(document.getElementById(`ap_rew_${i}`).value);
+      saveData(d);
+      renderAdminPortal();
+      notify("Package updated!", "success");
+    }
+
+    function adminAddAd(e) {
+      e.preventDefault();
+      const d = getData();
+      d.ads.push({
+        id: Date.now(),
+        title: document.getElementById("newAdTitle").value,
+        reward: parseFloat(document.getElementById("newAdReward").value),
+        duration: parseInt(document.getElementById("newAdDuration").value, 10)
+      });
+      saveData(d);
+      e.target.reset();
+      renderAdminPortal();
+      notify("Ad published!", "success");
+    }
+
+    function adminDelAd(id) {
+      const d = getData();
+      d.ads = d.ads.filter(a => a.id !== id);
+      saveData(d);
+      renderAdminPortal();
+      notify("Ad removed.", "info");
+    }
+
     function watchAd(id) {
-      const state = getState();
-      const user = state.users.find(u => u.email === state.currentUserEmail);
+      const d = getData();
+      const user = d.users.find(u => u.email === d.activeUser);
       if (user.status !== "active") {
         notify("Account status is Pending Approval!", "error");
         return;
       }
-      const pkg = state.packages.find(p => p.id === user.package) || state.packages[0];
+      const pkg = d.packages.find(p => p.id === user.package) || d.packages[0];
       if (user.clicks >= pkg.dailyAds) {
-        notify("Daily limit reached for your plan!", "error");
+        notify("Daily limit reached!", "error");
         return;
       }
 
-      activeAd = state.ads.find(a => a.id === id);
+      activeAd = d.ads.find(a => a.id === id);
       openModal("adModal");
       document.getElementById("adCaptchaBox").style.display = "none";
       document.getElementById("adModalTitle").textContent = activeAd.title;
@@ -443,13 +848,13 @@
     function submitCaptcha() {
       const ans = parseInt(document.getElementById("captchaA").value, 10);
       if (ans === mathResult) {
-        const state = getState();
-        const user = state.users.find(u => u.email === state.currentUserEmail);
+        const d = getData();
+        const user = d.users.find(u => u.email === d.activeUser);
         user.balance += activeAd.reward;
         user.clicks++;
-        saveState(state);
+        saveData(d);
         closeModal("adModal");
-        syncUI();
+        renderUserPortal();
         notify(`Earned $${activeAd.reward.toFixed(2)}!`, "success");
       } else {
         notify("Wrong answer!", "error");
@@ -457,30 +862,30 @@
     }
 
     function buyPackage(pkgId) {
-      const state = getState();
-      const user = state.users.find(u => u.email === state.currentUserEmail);
-      const target = state.packages.find(p => p.id === pkgId);
+      const d = getData();
+      const user = d.users.find(u => u.email === d.activeUser);
+      const target = d.packages.find(p => p.id === pkgId);
       if (target.price > user.balance) {
-        notify(`Deposit $${(target.price - user.balance).toFixed(2)} to upgrade!`, "error");
-        navigate("deposit");
+        notify(`Deposit $${(target.price - user.balance).toFixed(2)} first!`, "error");
+        userNav("deposit");
         return;
       }
       user.balance -= target.price;
       user.package = target.id;
-      saveState(state);
-      syncUI();
+      saveData(d);
+      renderUserPortal();
       notify(`Upgraded to ${target.name}!`, "success");
     }
 
-    function submitDeposit(e) {
+    function handleDepositSubmit(e) {
       e.preventDefault();
-      const state = getState();
+      const d = getData();
       const amt = parseFloat(document.getElementById("depAmount").value);
       const tid = document.getElementById("depTID").value.trim();
 
-      state.transactions.unshift({
+      d.transactions.unshift({
         id: "DEP-" + Date.now().toString().slice(-4),
-        user: state.currentUserEmail,
+        user: d.activeUser,
         type: "deposit",
         method: document.getElementById("depGateway").value.toUpperCase(),
         tid: tid,
@@ -488,18 +893,25 @@
         status: "pending"
       });
 
-      saveState(state);
+      saveData(d);
       e.target.reset();
       notify("Deposit submitted for approval!", "success");
-      syncUI();
-      navigate("dashboard");
+      renderUserPortal();
+      userNav("dashboard");
     }
 
-    function submitWithdraw(e) {
+    function handleWithdrawSubmit(e) {
       e.preventDefault();
-      const state = getState();
-      const user = state.users.find(u => u.email === state.currentUserEmail);
+      const d = getData();
+      const user = d.users.find(u => u.email === d.activeUser);
       const amt = parseFloat(document.getElementById("wthAmount").value);
+      const minWithdraw = (d.settings && d.settings.minWithdrawal) ? d.settings.minWithdrawal : 45.00;
+
+      // Minimum Withdrawal Validation Rule
+      if (amt < minWithdraw) {
+        notify(`Minimum withdrawal amount is $${minWithdraw.toFixed(2)}!`, "error");
+        return;
+      }
 
       if (amt > user.balance) {
         notify("Insufficient available balance!", "error");
@@ -507,9 +919,9 @@
       }
 
       user.balance -= amt;
-      state.transactions.unshift({
+      d.transactions.unshift({
         id: "WTH-" + Date.now().toString().slice(-4),
-        user: state.currentUserEmail,
+        user: d.activeUser,
         type: "withdraw",
         method: document.getElementById("wthGateway").value + " (" + document.getElementById("wthAccount").value + ")",
         tid: "PROCESSING",
@@ -517,35 +929,35 @@
         status: "pending"
       });
 
-      saveState(state);
+      saveData(d);
       e.target.reset();
-      notify("Withdrawal submitted!", "info");
-      syncUI();
-      navigate("dashboard");
+      notify("Withdrawal submitted successfully!", "info");
+      renderUserPortal();
+      userNav("dashboard");
     }
 
-    function registerUser(e) {
+    function handleUserRegister(e) {
       e.preventDefault();
-      const state = getState();
+      const d = getData();
       const name = document.getElementById("regName").value.trim();
       const email = document.getElementById("regEmail").value.trim().toLowerCase();
 
-      let user = state.users.find(u => u.email === email);
+      let user = d.users.find(u => u.email === email);
       if (user) {
-        state.currentUserEmail = user.email;
+        d.activeUser = user.email;
       } else {
         const u = { name, email, balance: 0.0, totalDeposit: 0.0, totalWithdraw: 0.0, clicks: 0, package: "free", status: "pending" };
-        state.users.push(u);
-        state.currentUserEmail = u.email;
+        d.users.push(u);
+        d.activeUser = u.email;
       }
-      saveState(state);
+      saveData(d);
       closeModal("authModal");
-      syncUI();
-      notify("Active user switched!", "success");
+      renderUserPortal();
+      notify("User switched successfully!", "success");
     }
 
-    function openModal(id) { document.getElementById(id).style.display = "flex"; }
-    function closeModal(id) { document.getElementById(id).style.display = "none"; }
+    function openModal(id) { document.getElementById(id).classList.add("active"); }
+    function closeModal(id) { document.getElementById(id).classList.remove("active"); }
 
     function notify(txt, type) {
       const box = document.getElementById("toastBox");
@@ -556,7 +968,23 @@
       setTimeout(() => el.remove(), 3000);
     }
 
-    window.addEventListener("DOMContentLoaded", syncUI);
+    window.addEventListener("DOMContentLoaded", () => {
+      const p = new URLSearchParams(window.location.search);
+      if (p.get("access") === "admin_secure_key" || p.get("view") === "admin") {
+        document.getElementById("section-user").style.display = "none";
+        document.getElementById("section-admin").style.display = "block";
+        renderAdminPortal();
+      } else {
+        renderUserPortal();
+      }
+
+      window.addEventListener("keydown", (e) => {
+        if (e.ctrlKey && e.shiftKey && (e.key === "A" || e.key === "a")) {
+          e.preventDefault();
+          triggerAdminPinModal();
+        }
+      });
+    });
   </script>
 </body>
 </html>
