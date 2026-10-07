@@ -20,10 +20,10 @@
     }
     * { margin:0; padding:0; box-sizing:border-box; font-family:'Inter', sans-serif; }
     body { background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
-    
     .glass { background: var(--card); border: 1px solid var(--border); border-radius: 12px; }
     .text-cyan { color: var(--cyan); }
     .text-emerald { color: var(--emerald); }
+    .text-amber { color: var(--amber); }
     .text-muted { color: var(--muted); }
     .text-xs { font-size: 0.75rem; }
     .text-sm { font-size: 0.875rem; }
@@ -74,6 +74,7 @@
 
     /* Modals */
     .modal { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 9999; padding: 1rem; }
+    .modal.active { display: flex !important; }
     .modal-box { width: 100%; max-width: 480px; padding: 1.5rem; position: relative; }
     
     .toast-box { position: fixed; top: 1rem; right: 1rem; z-index: 10000; display: flex; flex-direction: column; gap: 0.5rem; }
@@ -84,7 +85,7 @@
 </head>
 <body>
 
-  <!-- Clean User Navigation (NO ADMIN BUTTONS) -->
+  <!-- Clean User Navigation -->
   <nav class="navbar glass">
     <div class="nav-container">
       <div class="brand" onclick="goView('dashboard')">
@@ -99,8 +100,9 @@
         <button class="nav-btn" id="btn-withdraw" onclick="goView('withdraw')"><i class="fa-solid fa-money-bill-transfer"></i> Withdraw</button>
       </div>
 
-      <div class="text-xs text-muted">
-        Account: <span class="text-cyan font-bold" id="topUserEmail">investor@gmail.com</span>
+      <div style="display:flex; align-items:center; gap:0.6rem;">
+        <span class="text-xs text-muted" id="topUserEmail">user@mail.com</span>
+        <button class="btn btn-sm btn-cyan" onclick="openAuthModal()"><i class="fa-solid fa-user"></i> Switch / Register</button>
       </div>
     </div>
   </nav>
@@ -114,7 +116,7 @@
       <div class="glass p-4 flex-between">
         <div>
           <h2>Welcome, <span class="text-cyan" id="uGreeting">Investor</span>!</h2>
-          <p class="text-muted text-sm">Active Plan: <strong class="text-emerald" id="uTier">FREE TIER</strong></p>
+          <p class="text-muted text-sm">Account Status: <strong id="uStatusBadge" class="text-emerald">Active</strong> | Plan: <strong class="text-cyan" id="uTier">FREE TIER</strong></p>
         </div>
         <div style="display:flex; gap:0.5rem;">
           <button class="btn btn-emerald" onclick="goView('ptc')"><i class="fa-solid fa-coins"></i> Watch Ads</button>
@@ -159,7 +161,7 @@
       <div class="flex-between">
         <h2>PTC Ads Portal</h2>
         <div class="glass p-4" style="padding:0.4rem 0.8rem;">
-          Clicks Left Today: <strong class="text-emerald" id="ptcLeft">5</strong>
+          Clicks Left: <strong class="text-emerald" id="ptcLeft">5</strong>
         </div>
       </div>
       <div class="stats-grid mt-4" id="ptcContainer"></div>
@@ -168,7 +170,6 @@
     <!-- PACKAGES -->
     <section id="view-packages" class="view-panel">
       <h2>Investment & Membership Tiers</h2>
-      <p class="text-muted text-sm mt-1">Upgrade your tier to increase daily ad limits and earnings per click.</p>
       <div class="stats-grid mt-4" id="pkgContainer"></div>
     </section>
 
@@ -181,9 +182,9 @@
             <div style="margin-bottom:0.8rem;">
               <label class="text-xs text-muted">Select Gateway</label>
               <select id="depGateway" class="input-control" onchange="renderGatewayInfo()">
-                <option value="jazzcash">JazzCash (Pakistan)</option>
-                <option value="easypaisa">Easypaisa (Pakistan)</option>
-                <option value="usdt">USDT TRC-20 (Crypto)</option>
+                <option value="jazzcash">JazzCash</option>
+                <option value="easypaisa">Easypaisa</option>
+                <option value="usdt">USDT TRC-20</option>
               </select>
             </div>
             <div style="margin-bottom:0.8rem;">
@@ -198,7 +199,7 @@
           </form>
         </div>
         <div class="glass p-4">
-          <h3>Payment Gateway Info</h3>
+          <h3>Payment Gateway Info (Set by Admin)</h3>
           <div id="gatewayInfoBox" class="mt-4 text-sm"></div>
         </div>
       </div>
@@ -218,7 +219,7 @@
             </select>
           </div>
           <div style="margin-bottom:0.8rem;">
-            <label class="text-xs text-muted">Account Number / Wallet</label>
+            <label class="text-xs text-muted">Your Receiving Account Number / Wallet</label>
             <input type="text" id="wthAccount" class="input-control" placeholder="0300... or Tron Address" required />
           </div>
           <div style="margin-bottom:0.8rem;">
@@ -232,7 +233,29 @@
 
   </main>
 
-  <!-- PTC Watch Ad Modal with Real Anti-Bot Math Captcha -->
+  <!-- AUTH MODAL (Register New User / Login) -->
+  <div id="authModal" class="modal" style="display:none;">
+    <div class="glass modal-box">
+      <div class="flex-between">
+        <h3 id="authModalTitle">Register New Investor Account</h3>
+        <button class="btn btn-danger btn-sm" onclick="closeAuthModal()">&times;</button>
+      </div>
+      <form onsubmit="onRegisterUser(event)" class="mt-4">
+        <div style="margin-bottom:0.8rem;">
+          <label class="text-xs text-muted">Full Name</label>
+          <input type="text" id="regName" class="input-control" placeholder="e.g. Ali Raza" required />
+        </div>
+        <div style="margin-bottom:0.8rem;">
+          <label class="text-xs text-muted">Email Address</label>
+          <input type="email" id="regEmail" class="input-control" placeholder="user@gmail.com" required />
+        </div>
+        <button type="submit" class="btn btn-emerald w-full mt-2">Submit Registration Request</button>
+      </form>
+      <p class="text-xs text-muted mt-3 text-center">New accounts are reviewed by Admin before approval.</p>
+    </div>
+  </div>
+
+  <!-- PTC Watch Ad Modal -->
   <div id="adModal" class="modal" style="display:none;">
     <div class="glass modal-box">
       <div class="flex-between">
