@@ -3,14 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NexusPay | Master Admin Console</title>
+  <title>NexusPay | Master Admin</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
   <style>
     :root {
       --bg: #06090e;
-      --card: rgba(15, 23, 42, 0.95);
-      --border: rgba(255, 255, 255, 0.1);
+      --card: #0f172a;
+      --border: #1e293b;
       --cyan: #06b6d4;
       --emerald: #10b981;
       --amber: #f59e0b;
@@ -18,7 +17,7 @@
       --text: #f8fafc;
       --muted: #94a3b8;
     }
-    * { margin:0; padding:0; box-sizing:border-box; font-family:'Inter', sans-serif; }
+    * { margin:0; padding:0; box-sizing:border-box; font-family: system-ui, -apple-system, sans-serif; }
     body { background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
     .glass { background: var(--card); border: 1px solid var(--border); border-radius: 12px; }
     .text-cyan { color: var(--cyan); }
@@ -30,19 +29,16 @@
     .w-full { width: 100%; }
     .p-4 { padding: 1rem; }
     .mt-4 { margin-top: 1rem; }
-    .mt-6 { margin-top: 1.5rem; }
 
-    /* Admin Top Header */
-    .admin-bar { padding: 1rem 1.5rem; border-left: 4px solid var(--amber); border-radius: 0; }
+    .admin-bar { padding: 1rem 1.5rem; border-left: 4px solid var(--amber); }
     .btn { padding: 0.45rem 0.9rem; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; font-size: 0.85rem; }
-    .btn-cyan { background: var(--cyan); color: black; }
-    .btn-emerald { background: var(--emerald); color: black; }
-    .btn-amber { background: var(--amber); color: black; }
+    .btn-cyan { background: var(--cyan); color: #000; }
+    .btn-emerald { background: var(--emerald); color: #000; }
+    .btn-amber { background: var(--amber); color: #000; }
     .btn-danger { background: transparent; border: 1px solid var(--red); color: var(--red); }
     .btn-sm { padding: 0.25rem 0.6rem; font-size: 0.75rem; }
-    .input-control { background: #0b1120; border: 1px solid var(--border); color: white; padding: 0.6rem; border-radius: 8px; outline: none; width: 100%; }
+    .input-control { background: #0b1120; border: 1px solid var(--border); color: #fff; padding: 0.6rem; border-radius: 8px; outline: none; width: 100%; }
 
-    /* Stats */
     .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-top: 1rem; }
     .stat-card { padding: 1.2rem; border-left: 4px solid var(--cyan); }
     .stat-title { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; }
@@ -53,26 +49,25 @@
     .table { width: 100%; border-collapse: collapse; text-align: left; }
     .table th, .table td { padding: 0.75rem; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
 
-    /* Lock Screen Modal */
     .lock-screen { position: fixed; top:0; left:0; width:100%; height:100%; background: #030712; display: flex; align-items: center; justify-content: center; z-index: 10000; }
     .lock-box { width: 100%; max-width: 400px; padding: 2rem; text-align: center; }
 
     .toast-box { position: fixed; top: 1rem; right: 1rem; z-index: 10001; display: flex; flex-direction: column; gap: 0.5rem; }
-    .toast { padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.85rem; color: white; background: #065f46; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+    .toast { padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.85rem; color: #fff; background: #065f46; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
     .toast-error { background: #991b1b; }
     .toast-info { background: #0e3b5e; }
   </style>
 </head>
 <body>
 
-  <!-- Security Gate PIN 778899 -->
+  <!-- Security Gate PIN: 778899 -->
   <div id="lockScreen" class="lock-screen">
     <div class="glass lock-box">
       <i class="fa-solid fa-shield-halved text-cyan" style="font-size: 2.5rem;"></i>
-      <h2 class="mt-4">Master Admin Auth</h2>
-      <p class="text-muted text-xs mt-1">Enter Master Admin PIN to unlock management console</p>
-      <form onsubmit="unlockConsole(event)" class="mt-4">
-        <input type="password" id="adminPinInput" class="input-control text-center" style="font-size: 1.2rem; letter-spacing: 4px;" placeholder="PIN" required autofocus />
+      <h2 style="margin-top:1rem;">Master Admin Security</h2>
+      <p class="text-muted text-xs" style="margin-top:0.25rem;">Enter Master PIN (778899)</p>
+      <form onsubmit="unlock(event)" style="margin-top:1rem;">
+        <input type="password" id="adminPin" class="input-control" style="text-align:center; font-size:1.2rem; letter-spacing:4px;" placeholder="PIN" required autofocus />
         <button type="submit" class="btn btn-cyan w-full mt-4">Unlock Console</button>
       </form>
     </div>
@@ -80,193 +75,375 @@
 
   <div id="toastBox" class="toast-box"></div>
 
-  <!-- Top Admin Bar -->
   <header class="glass admin-bar flex-between">
     <div>
-      <h2><i class="fa-solid fa-crown text-amber"></i> NexusPay Administration Portal</h2>
-      <span class="text-xs text-cyan">Master Admin Console Active</span>
+      <h2><i class="fa-solid fa-crown text-amber"></i> Master Admin Control Panel</h2>
+      <span class="text-xs text-cyan">Live Controller</span>
     </div>
     <a href="index.html" class="btn btn-danger btn-sm"><i class="fa-solid fa-arrow-left"></i> View User Site</a>
   </header>
 
   <main class="main-wrap">
 
-    <!-- Platform Quick Metrics -->
     <div class="stats-grid">
       <div class="glass stat-card">
         <div class="stat-title">Platform Users</div>
-        <div class="stat-value text-cyan" id="mTotalUsers">0</div>
+        <div class="stat-value text-cyan" id="mUsers">0</div>
       </div>
       <div class="glass stat-card" style="border-left-color: var(--emerald);">
         <div class="stat-title">Approved Deposits</div>
-        <div class="stat-value text-emerald" id="mTotalDeposits">$0.00</div>
+        <div class="stat-value text-emerald" id="mDeposits">$0.00</div>
       </div>
       <div class="glass stat-card" style="border-left-color: var(--amber);">
         <div class="stat-title">Pending Withdrawals</div>
-        <div class="stat-value text-amber" id="mPendingWithdrawals">$0.00</div>
+        <div class="stat-value text-amber" id="mWithdrawals">$0.00</div>
       </div>
       <div class="glass stat-card" style="border-left-color: #a855f7;">
         <div class="stat-title">Pending Registrations</div>
-        <div class="stat-value text-purple" id="mPendingUsers">0</div>
+        <div class="stat-value text-purple" id="mPendingSignups">0</div>
       </div>
     </div>
 
-    <!-- Admin Navigation Tabs -->
+    <!-- Navigation Tabs -->
     <div style="display:flex; gap:0.5rem; margin-top:1.5rem; flex-wrap:wrap;">
-      <button class="btn btn-sm btn-cyan" onclick="setTab('users')"><i class="fa-solid fa-users"></i> User Accounts & Requests</button>
-      <button class="btn btn-sm btn-emerald" onclick="setTab('gateways')"><i class="fa-solid fa-wallet"></i> Payment Gateways Editor</button>
-      <button class="btn btn-sm btn-emerald" onclick="setTab('deposits')"><i class="fa-solid fa-inbox"></i> Deposit Queue</button>
-      <button class="btn btn-sm btn-amber" onclick="setTab('withdrawals')"><i class="fa-solid fa-hand-holding-dollar"></i> Withdrawal Queue</button>
-      <button class="btn btn-sm btn-cyan" onclick="setTab('packages')"><i class="fa-solid fa-gem"></i> Packages</button>
-      <button class="btn btn-sm btn-emerald" onclick="setTab('ads')"><i class="fa-solid fa-bullhorn"></i> PTC Ads</button>
+      <button class="btn btn-sm btn-cyan" onclick="switchTab('users')"><i class="fa-solid fa-users"></i> Users & Balance</button>
+      <button class="btn btn-sm btn-emerald" onclick="switchTab('gateways')"><i class="fa-solid fa-wallet"></i> Payment Gateways</button>
+      <button class="btn btn-sm btn-emerald" onclick="switchTab('deposits')"><i class="fa-solid fa-inbox"></i> Deposit Queue</button>
+      <button class="btn btn-sm btn-amber" onclick="switchTab('withdrawals')"><i class="fa-solid fa-hand-holding-dollar"></i> Withdrawal Queue</button>
+      <button class="btn btn-sm btn-cyan" onclick="switchTab('packages')"><i class="fa-solid fa-gem"></i> Packages</button>
+      <button class="btn btn-sm btn-emerald" onclick="switchTab('ads')"><i class="fa-solid fa-bullhorn"></i> PTC Ads</button>
     </div>
 
-    <!-- TAB 1: USERS & REGISTRATION REQUESTS -->
-    <div id="tab-users" class="glass p-4 mt-4 tab-content">
-      <div class="flex-between">
-        <h3>User Accounts, Registration Approval & Balance</h3>
-        <span class="text-xs text-muted">Approve pending signups or edit balances</span>
-      </div>
-      <div class="table-wrap mt-3">
+    <!-- 1. USERS & BALANCE -->
+    <div id="adm-users" class="glass p-4 mt-4 adm-tab">
+      <h3>User Accounts & Direct Balance Controller</h3>
+      <div class="table-wrap mt-4">
         <table class="table">
           <thead><tr><th>Name & Email</th><th>Status</th><th>Balance</th><th>Plan</th><th>Actions</th></tr></thead>
-          <tbody id="admUsersBody"></tbody>
+          <tbody id="admUsersList"></tbody>
         </table>
       </div>
     </div>
 
-    <!-- TAB 2: PAYMENT GATEWAYS CONFIGURATION (CHANGE NUMBERS & TITLES) -->
-    <div id="tab-gateways" class="glass p-4 mt-4 tab-content" style="display:none;">
-      <h3>Edit Payment Gateways (JazzCash, Easypaisa, USDT)</h3>
-      <p class="text-xs text-muted">Whatever account numbers you set here will be displayed immediately to users on the deposit & withdraw forms.</p>
-      
-      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; margin-top: 1rem;">
+    <!-- 2. PAYMENT GATEWAYS EDITOR -->
+    <div id="adm-gateways" class="glass p-4 mt-4 adm-tab" style="display:none;">
+      <h3>Configure Receiving Payment Numbers</h3>
+      <p class="text-xs text-muted">Values updated here change the deposit screen immediately.</p>
+
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:1rem; margin-top:1rem;">
         
-        <!-- JazzCash Card -->
         <div class="glass p-4" style="border: 1px solid var(--amber);">
-          <h4 class="text-amber"><i class="fa-solid fa-mobile-screen"></i> JazzCash Pakistan</h4>
-          <div class="mt-2">
-            <label class="text-xs text-muted">Account Number / Mobile</label>
-            <input type="text" id="gw_jazzcash_acc" class="input-control" />
+          <h4 class="text-amber">JazzCash Pakistan</h4>
+          <div style="margin-top:0.5rem;">
+            <label class="text-xs text-muted">Account Number</label>
+            <input type="text" id="gw_jazzcash_num" class="input-control" />
           </div>
-          <div class="mt-2">
-            <label class="text-xs text-muted">Account Holder Title</label>
-            <input type="text" id="gw_jazzcash_name" class="input-control" />
+          <div style="margin-top:0.5rem;">
+            <label class="text-xs text-muted">Account Title</label>
+            <input type="text" id="gw_jazzcash_tit" class="input-control" />
           </div>
-          <button class="btn btn-amber btn-sm w-full mt-3" onclick="saveGateway('jazzcash')">Update JazzCash</button>
+          <button class="btn btn-amber btn-sm w-full mt-4" onclick="saveGateway('jazzcash')">Save JazzCash</button>
         </div>
 
-        <!-- Easypaisa Card -->
         <div class="glass p-4" style="border: 1px solid var(--emerald);">
-          <h4 class="text-emerald"><i class="fa-solid fa-mobile-screen-button"></i> Easypaisa Pakistan</h4>
-          <div class="mt-2">
-            <label class="text-xs text-muted">Account Number / Mobile</label>
-            <input type="text" id="gw_easypaisa_acc" class="input-control" />
+          <h4 class="text-emerald">Easypaisa Pakistan</h4>
+          <div style="margin-top:0.5rem;">
+            <label class="text-xs text-muted">Account Number</label>
+            <input type="text" id="gw_easypaisa_num" class="input-control" />
           </div>
-          <div class="mt-2">
-            <label class="text-xs text-muted">Account Holder Title</label>
-            <input type="text" id="gw_easypaisa_name" class="input-control" />
+          <div style="margin-top:0.5rem;">
+            <label class="text-xs text-muted">Account Title</label>
+            <input type="text" id="gw_easypaisa_tit" class="input-control" />
           </div>
-          <button class="btn btn-emerald btn-sm w-full mt-3" onclick="saveGateway('easypaisa')">Update Easypaisa</button>
+          <button class="btn btn-emerald btn-sm w-full mt-4" onclick="saveGateway('easypaisa')">Save Easypaisa</button>
         </div>
 
-        <!-- USDT Card -->
         <div class="glass p-4" style="border: 1px solid var(--cyan);">
-          <h4 class="text-cyan"><i class="fa-brands fa-ethereum"></i> USDT (TRC-20 Tron)</h4>
-          <div class="mt-2">
-            <label class="text-xs text-muted">Tron TRC-20 Wallet Address</label>
-            <input type="text" id="gw_usdt_acc" class="input-control" />
+          <h4 class="text-cyan">USDT (TRC-20)</h4>
+          <div style="margin-top:0.5rem;">
+            <label class="text-xs text-muted">Wallet Address</label>
+            <input type="text" id="gw_usdt_num" class="input-control" />
           </div>
-          <div class="mt-2">
-            <label class="text-xs text-muted">Wallet Title / Exchange</label>
-            <input type="text" id="gw_usdt_name" class="input-control" />
+          <div style="margin-top:0.5rem;">
+            <label class="text-xs text-muted">Exchange / Title</label>
+            <input type="text" id="gw_usdt_tit" class="input-control" />
           </div>
-          <button class="btn btn-cyan btn-sm w-full mt-3" onclick="saveGateway('usdt')">Update USDT Wallet</button>
+          <button class="btn btn-cyan btn-sm w-full mt-4" onclick="saveGateway('usdt')">Save USDT</button>
         </div>
 
       </div>
     </div>
 
-    <!-- TAB 3: DEPOSIT VERIFICATION -->
-    <div id="tab-deposits" class="glass p-4 mt-4 tab-content" style="display:none;">
+    <!-- 3. DEPOSIT APPROVALS -->
+    <div id="adm-deposits" class="glass p-4 mt-4 adm-tab" style="display:none;">
       <h3>Pending Deposit Verifications</h3>
-      <div class="table-wrap mt-3">
+      <div class="table-wrap mt-4">
         <table class="table">
-          <thead><tr><th>User</th><th>Gateway</th><th>TID / Hash</th><th>Amount</th><th>Action</th></tr></thead>
-          <tbody id="admDepositsBody"></tbody>
+          <thead><tr><th>User</th><th>Gateway</th><th>TID</th><th>Amount</th><th>Action</th></tr></thead>
+          <tbody id="admDepositsList"></tbody>
         </table>
       </div>
     </div>
 
-    <!-- TAB 4: WITHDRAWAL PAYOUTS -->
-    <div id="tab-withdrawals" class="glass p-4 mt-4 tab-content" style="display:none;">
+    <!-- 4. WITHDRAWAL APPROVALS -->
+    <div id="adm-withdrawals" class="glass p-4 mt-4 adm-tab" style="display:none;">
       <h3>Pending Withdrawal Requests</h3>
-      <div class="table-wrap mt-3">
+      <div class="table-wrap mt-4">
         <table class="table">
-          <thead><tr><th>User</th><th>Account / Wallet</th><th>Amount</th><th>Action</th></tr></thead>
-          <tbody id="admWithdrawalsBody"></tbody>
+          <thead><tr><th>User</th><th>Account</th><th>Amount</th><th>Action</th></tr></thead>
+          <tbody id="admWithdrawalsList"></tbody>
         </table>
       </div>
     </div>
 
-    <!-- TAB 5: PACKAGES -->
-    <div id="tab-packages" class="glass p-4 mt-4 tab-content" style="display:none;">
-      <h3>Package Pricing & Ad Limits</h3>
-      <div class="table-wrap mt-3">
+    <!-- 5. PACKAGES -->
+    <div id="adm-packages" class="glass p-4 mt-4 adm-tab" style="display:none;">
+      <h3>Packages Configuration</h3>
+      <div class="table-wrap mt-4">
         <table class="table">
-          <thead><tr><th>Plan Name</th><th>Price ($)</th><th>Daily Ads</th><th>Earn/Ad ($)</th><th>Save</th></tr></thead>
-          <tbody id="admPackagesBody"></tbody>
+          <thead><tr><th>Plan</th><th>Price ($)</th><th>Daily Ads</th><th>Earn/Ad ($)</th><th>Action</th></tr></thead>
+          <tbody id="admPackagesList"></tbody>
         </table>
       </div>
     </div>
 
-    <!-- TAB 6: PTC ADS -->
-    <div id="tab-ads" class="glass p-4 mt-4 tab-content" style="display:none;">
-      <h3>Publish New PTC Ad</h3>
-      <form onsubmit="onAddAd(event)" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:0.5rem; margin-top:0.5rem;">
+    <!-- 6. PTC ADS -->
+    <div id="adm-ads" class="glass p-4 mt-4 adm-tab" style="display:none;">
+      <h3>Publish Sponsored Ad</h3>
+      <form onsubmit="addAd(event)" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:0.5rem; margin-top:0.5rem;">
         <input type="text" id="adTitle" placeholder="Ad Title" class="input-control" required />
         <input type="number" id="adReward" step="0.01" placeholder="Reward ($)" class="input-control" required />
-        <input type="number" id="adDuration" placeholder="Duration (Seconds)" class="input-control" required />
-        <button type="submit" class="btn btn-emerald">Create Ad</button>
+        <input type="number" id="adDuration" placeholder="Duration (s)" class="input-control" required />
+        <button type="submit" class="btn btn-emerald">Add Campaign</button>
       </form>
-      <h4 class="mt-4">Live PTC Campaigns</h4>
-      <div class="table-wrap mt-2">
+      <div class="table-wrap" style="margin-top:1.5rem;">
         <table class="table">
           <thead><tr><th>Title</th><th>Reward</th><th>Duration</th><th>Action</th></tr></thead>
-          <tbody id="admAdsBody"></tbody>
+          <tbody id="admAdsList"></tbody>
         </table>
       </div>
     </div>
 
   </main>
 
-  <script src="app.js"></script>
   <script>
-    function unlockConsole(e) {
+    const STORAGE_KEY = "NEXUS_STATE";
+
+    function getState() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    }
+    function saveState(s) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+    }
+
+    function unlock(e) {
       e.preventDefault();
-      const pin = document.getElementById("adminPinInput").value;
-      if (pin === "778899") {
+      if (document.getElementById("adminPin").value === "778899") {
         document.getElementById("lockScreen").style.display = "none";
-        renderAdminDashboard();
-        notify("Master Console Unlocked!", "success");
+        render();
+        notify("Master Panel Unlocked!", "success");
       } else {
         notify("Invalid PIN Code!", "error");
       }
     }
 
-    function setTab(name) {
-      document.querySelectorAll(".tab-content").forEach(c => c.style.display = "none");
-      const el = document.getElementById("tab-" + name);
-      if (el) el.style.display = "block";
+    function switchTab(id) {
+      document.querySelectorAll(".adm-tab").forEach(t => t.style.display = "none");
+      const target = document.getElementById("adm-" + id);
+      if (target) target.style.display = "block";
     }
 
-    window.addEventListener("DOMContentLoaded", () => {
-      const p = new URLSearchParams(window.location.search);
-      if (p.get("access") === "admin_secure_key") {
-        document.getElementById("lockScreen").style.display = "none";
-        renderAdminDashboard();
+    function render() {
+      const state = getState();
+      if (!state) return;
+
+      document.getElementById("mUsers").textContent = state.users.length;
+      const depTotal = state.transactions.filter(t => t.type === 'deposit' && t.status === 'approved').reduce((a, b) => a + b.amount, 0);
+      document.getElementById("mDeposits").textContent = "$" + depTotal.toFixed(2);
+      const wthTotal = state.transactions.filter(t => t.type === 'withdraw' && t.status === 'pending').reduce((a, b) => a + b.amount, 0);
+      document.getElementById("mWithdrawals").textContent = "$" + wthTotal.toFixed(2);
+      document.getElementById("mPendingSignups").textContent = state.users.filter(u => u.status === 'pending').length;
+
+      // 1. Users
+      document.getElementById("admUsersList").innerHTML = state.users.map(u => `
+        <tr>
+          <td><strong>${u.name}</strong><br><span class="text-xs text-muted">${u.email}</span></td>
+          <td><span style="color:${u.status === 'active' ? '#10b981' : '#f59e0b'}; font-weight:700;">${u.status.toUpperCase()}</span></td>
+          <td class="font-bold text-emerald">$${u.balance.toFixed(2)}</td>
+          <td>${u.package.toUpperCase()}</td>
+          <td>
+            <button class="btn btn-sm btn-cyan" onclick="editBalance('${u.email}')">Edit Balance</button>
+            ${u.status === 'pending' ? `<button class="btn btn-sm btn-emerald" onclick="setUserStatus('${u.email}', 'active')">Approve</button>` : ''}
+            ${u.status === 'active' ? `<button class="btn btn-sm btn-danger" onclick="setUserStatus('${u.email}', 'suspended')">Ban</button>` : `<button class="btn btn-sm btn-emerald" onclick="setUserStatus('${u.email}', 'active')">Activate</button>`}
+          </td>
+        </tr>
+      `).join("");
+
+      // 2. Gateway Inputs
+      document.getElementById("gw_jazzcash_num").value = state.gateways.jazzcash.account;
+      document.getElementById("gw_jazzcash_tit").value = state.gateways.jazzcash.name;
+      document.getElementById("gw_easypaisa_num").value = state.gateways.easypaisa.account;
+      document.getElementById("gw_easypaisa_tit").value = state.gateways.easypaisa.name;
+      document.getElementById("gw_usdt_num").value = state.gateways.usdt.account;
+      document.getElementById("gw_usdt_tit").value = state.gateways.usdt.name;
+
+      // 3. Deposits
+      const deps = state.transactions.filter(t => t.type === "deposit" && t.status === "pending");
+      document.getElementById("admDepositsList").innerHTML = deps.length ? deps.map(d => `
+        <tr>
+          <td>${d.user}</td>
+          <td>${d.method}</td>
+          <td class="text-cyan font-bold">${d.tid}</td>
+          <td class="font-bold text-emerald">$${d.amount.toFixed(2)}</td>
+          <td>
+            <button class="btn btn-sm btn-emerald" onclick="approveDeposit('${d.id}', true)">Approve</button>
+            <button class="btn btn-sm btn-danger" onclick="approveDeposit('${d.id}', false)">Reject</button>
+          </td>
+        </tr>
+      `).join("") : `<tr><td colspan="5" class="text-muted">No pending deposit requests.</td></tr>`;
+
+      // 4. Withdrawals
+      const wths = state.transactions.filter(t => t.type === "withdraw" && t.status === "pending");
+      document.getElementById("admWithdrawalsList").innerHTML = wths.length ? wths.map(w => `
+        <tr>
+          <td>${w.user}</td>
+          <td>${w.method}</td>
+          <td class="font-bold text-cyan">$${w.amount.toFixed(2)}</td>
+          <td>
+            <button class="btn btn-sm btn-emerald" onclick="approveWithdrawal('${w.id}', true)">Mark Paid</button>
+            <button class="btn btn-sm btn-danger" onclick="approveWithdrawal('${w.id}', false)">Refund</button>
+          </td>
+        </tr>
+      `).join("") : `<tr><td colspan="4" class="text-muted">No pending withdrawal requests.</td></tr>`;
+
+      // 5. Packages
+      document.getElementById("admPackagesList").innerHTML = state.packages.map((p, i) => `
+        <tr>
+          <td><strong>${p.name}</strong></td>
+          <td><input type="number" id="adm_prc_${i}" value="${p.price}" class="input-control" style="max-width:80px;" /></td>
+          <td><input type="number" id="adm_ads_${i}" value="${p.dailyAds}" class="input-control" style="max-width:80px;" /></td>
+          <td><input type="number" step="0.01" id="adm_rew_${i}" value="${p.reward}" class="input-control" style="max-width:80px;" /></td>
+          <td><button class="btn btn-sm btn-emerald" onclick="savePkg(${i})">Save</button></td>
+        </tr>
+      `).join("");
+
+      // 6. Ads
+      document.getElementById("admAdsList").innerHTML = state.ads.map(a => `
+        <tr>
+          <td>${a.title}</td>
+          <td class="font-bold text-emerald">$${a.reward}</td>
+          <td>${a.duration}s</td>
+          <td><button class="btn btn-sm btn-danger" onclick="delAd(${a.id})">Delete</button></td>
+        </tr>
+      `).join("");
+    }
+
+    function editBalance(email) {
+      const state = getState();
+      const u = state.users.find(x => x.email === email);
+      const val = prompt(`Set new balance for ${email}:`, u.balance.toFixed(2));
+      if (val !== null && !isNaN(parseFloat(val))) {
+        u.balance = parseFloat(val);
+        saveState(state);
+        render();
+        notify("Balance updated!", "success");
       }
-    });
+    }
+
+    function setUserStatus(email, status) {
+      const state = getState();
+      const u = state.users.find(x => x.email === email);
+      u.status = status;
+      saveState(state);
+      render();
+      notify(`User status set to ${status}!`, "info");
+    }
+
+    function saveGateway(key) {
+      const state = getState();
+      state.gateways[key].account = document.getElementById(`gw_${key}_num`).value.trim();
+      state.gateways[key].name = document.getElementById(`gw_${key}_tit`).value.trim();
+      saveState(state);
+      notify(`Updated ${state.gateways[key].title}!`, "success");
+    }
+
+    function approveDeposit(txId, ok) {
+      const state = getState();
+      const t = state.transactions.find(x => x.id === txId);
+      t.status = ok ? "approved" : "rejected";
+      if (ok) {
+        const u = state.users.find(x => x.email === t.user);
+        if (u) {
+          u.balance += t.amount;
+          u.totalDeposit += t.amount;
+        }
+        notify(`Deposit Approved! $${t.amount} added.`, "success");
+      } else {
+        notify("Deposit Rejected.", "info");
+      }
+      saveState(state);
+      render();
+    }
+
+    function approveWithdrawal(txId, ok) {
+      const state = getState();
+      const t = state.transactions.find(x => x.id === txId);
+      t.status = ok ? "approved" : "rejected";
+      if (!ok) {
+        const u = state.users.find(x => x.email === t.user);
+        if (u) u.balance += t.amount;
+        notify("Withdrawal Rejected & Refunded.", "info");
+      } else {
+        const u = state.users.find(x => x.email === t.user);
+        if (u) u.totalWithdraw += t.amount;
+        notify("Withdrawal Marked as Paid!", "success");
+      }
+      saveState(state);
+      render();
+    }
+
+    function savePkg(i) {
+      const state = getState();
+      state.packages[i].price = parseFloat(document.getElementById(`adm_prc_${i}`).value);
+      state.packages[i].dailyAds = parseInt(document.getElementById(`adm_ads_${i}`).value, 10);
+      state.packages[i].reward = parseFloat(document.getElementById(`adm_rew_${i}`).value);
+      saveState(state);
+      render();
+      notify("Package settings saved!", "success");
+    }
+
+    function addAd(e) {
+      e.preventDefault();
+      const state = getState();
+      state.ads.push({
+        id: Date.now(),
+        title: document.getElementById("adTitle").value,
+        reward: parseFloat(document.getElementById("adReward").value),
+        duration: parseInt(document.getElementById("adDuration").value, 10)
+      });
+      saveState(state);
+      e.target.reset();
+      render();
+      notify("PTC Ad added!", "success");
+    }
+
+    function delAd(id) {
+      const state = getState();
+      state.ads = state.ads.filter(a => a.id !== id);
+      saveState(state);
+      render();
+      notify("Ad removed.", "info");
+    }
+
+    function notify(txt, type) {
+      const box = document.getElementById("toastBox");
+      const el = document.createElement("div");
+      el.className = `toast ${type === 'error' ? 'toast-error' : (type === 'info' ? 'toast-info' : '')}`;
+      el.textContent = txt;
+      box.appendChild(el);
+      setTimeout(() => el.remove(), 3000);
+    }
   </script>
 </body>
 </html>
