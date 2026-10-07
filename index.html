@@ -28,12 +28,13 @@
     .text-sm { font-size: 0.875rem; }
     .font-bold { font-weight: 700; }
     .flex-between { display: flex; justify-content: space-between; align-items: center; }
+    .mt-1 { margin-top: 0.25rem; }
     .mt-2 { margin-top: 0.5rem; }
     .mt-4 { margin-top: 1rem; }
     .w-full { width: 100%; }
     .p-4 { padding: 1rem; }
 
-    /* Nav */
+    /* Navigation */
     .navbar { padding: 0.8rem 1.5rem; position: sticky; top:0; z-index: 50; }
     .nav-container { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
     .brand { font-size: 1.3rem; font-weight: 800; cursor: pointer; }
@@ -74,13 +75,18 @@
     /* Modals */
     .modal { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 9999; padding: 1rem; }
     .modal.active { display: flex !important; }
-    .modal-box { width: 100%; max-width: 480px; padding: 1.5rem; position: relative; }
+    .modal-box { width: 100%; max-width: 460px; padding: 1.5rem; position: relative; }
 
     /* Toasts */
     .toast-box { position: fixed; top: 1rem; right: 1rem; z-index: 10000; display: flex; flex-direction: column; gap: 0.5rem; }
     .toast { padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.85rem; color: #fff; background: #065f46; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
     .toast-error { background: #991b1b; }
     .toast-info { background: #0e3b5e; }
+
+    /* Tabs Pill */
+    .tab-pills { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 1rem; }
+    .tab-pill { flex: 1; text-align: center; padding: 0.6rem; cursor: pointer; color: var(--muted); font-weight: 600; border-bottom: 2px solid transparent; }
+    .tab-pill.active { color: var(--cyan); border-color: var(--cyan); }
   </style>
 </head>
 <body>
@@ -104,19 +110,24 @@
         </div>
 
         <div style="display:flex; align-items:center; gap:0.6rem;">
-          <span class="text-xs text-muted" id="topUserEmail">user@mail.com</span>
-          <button class="btn btn-sm btn-cyan" onclick="openModal('authModal')"><i class="fa-solid fa-user"></i> Switch / Signup</button>
+          <div id="userBadgeLoggedIn" style="display:none; align-items:center; gap:0.5rem;">
+            <span class="text-xs text-muted" id="topUserEmail">user@mail.com</span>
+            <button class="btn btn-sm btn-danger" onclick="userLogout()"><i class="fa-solid fa-right-from-bracket"></i></button>
+          </div>
+          <button class="btn btn-sm btn-cyan" id="userBadgeGuest" onclick="openAuthModal('login')">
+            <i class="fa-solid fa-user-lock"></i> Login / Register
+          </button>
         </div>
       </div>
     </nav>
 
     <main class="main-content">
-      <!-- USER TAB: DASHBOARD -->
+      <!-- DASHBOARD TAB -->
       <section id="uview-dashboard" class="view-panel active">
         <div class="glass p-4 flex-between">
           <div>
-            <h2>Welcome, <span class="text-cyan" id="uGreeting">Investor</span>!</h2>
-            <p class="text-muted text-sm">Status: <strong id="uStatusBadge" class="text-emerald">Active</strong> | Plan: <strong class="text-cyan" id="uTier">FREE TIER</strong></p>
+            <h2>Welcome, <span class="text-cyan" id="uGreeting">Guest</span>!</h2>
+            <p class="text-muted text-sm">Status: <strong id="uStatusBadge" class="text-muted">Not Logged In</strong> | Plan: <strong class="text-cyan" id="uTier">FREE TIER</strong></p>
           </div>
           <div style="display:flex; gap:0.5rem;">
             <button class="btn btn-emerald" onclick="userNav('ptc')"><i class="fa-solid fa-coins"></i> Watch Ads</button>
@@ -144,7 +155,7 @@
         </div>
 
         <div class="glass p-4 mt-4">
-          <h3><i class="fa-solid fa-clock-rotate-left text-cyan"></i> Transaction Ledger</h3>
+          <h3><i class="fa-solid fa-clock-rotate-left text-cyan"></i> My Transactions</h3>
           <div class="table-wrap mt-2">
             <table class="table">
               <thead>
@@ -156,7 +167,7 @@
         </div>
       </section>
 
-      <!-- USER TAB: PTC ADS -->
+      <!-- PTC ADS TAB -->
       <section id="uview-ptc" class="view-panel">
         <div class="flex-between">
           <h2>PTC Ads Portal</h2>
@@ -167,13 +178,13 @@
         <div class="stats-grid mt-4" id="ptcContainer"></div>
       </section>
 
-      <!-- USER TAB: PACKAGES -->
+      <!-- PACKAGES TAB -->
       <section id="uview-packages" class="view-panel">
         <h2>Investment & Membership Tiers</h2>
         <div class="stats-grid mt-4" id="pkgContainer"></div>
       </section>
 
-      <!-- USER TAB: DEPOSIT -->
+      <!-- DEPOSIT TAB -->
       <section id="uview-deposit" class="view-panel">
         <div class="two-col">
           <div class="glass p-4">
@@ -199,13 +210,13 @@
             </form>
           </div>
           <div class="glass p-4">
-            <h3>Payment Gateway Info (From Admin)</h3>
+            <h3>Official Payment Accounts (From Admin)</h3>
             <div id="gatewayInfoBox" class="mt-4 text-sm"></div>
           </div>
         </div>
       </section>
 
-      <!-- USER TAB: WITHDRAW -->
+      <!-- WITHDRAW TAB -->
       <section id="uview-withdraw" class="view-panel">
         <div class="glass p-4" style="max-width:550px; margin:0 auto;">
           <h2>Request Withdrawal</h2>
@@ -239,12 +250,12 @@
     </footer>
   </div>
 
-  <!-- ==================== 2. ADMIN SECTION ==================== -->
+  <!-- ==================== 2. MASTER ADMIN PORTAL ==================== -->
   <div id="section-admin" style="display:none;">
     <header class="glass admin-bar flex-between" style="padding:1rem 1.5rem; border-left:4px solid var(--amber);">
       <div>
         <h2><i class="fa-solid fa-crown text-amber"></i> Master Admin Control Panel</h2>
-        <span class="text-xs text-cyan">A-Z System Controller</span>
+        <span class="text-xs text-cyan">Live Management System</span>
       </div>
       <button class="btn btn-danger btn-sm" onclick="exitAdmin()"><i class="fa-solid fa-arrow-left"></i> Exit Admin Mode</button>
     </header>
@@ -264,14 +275,14 @@
           <div class="stat-value text-amber" id="mWithdrawals">$0.00</div>
         </div>
         <div class="glass stat-card" style="border-left-color: #a855f7;">
-          <div class="stat-title">Pending Signups</div>
+          <div class="stat-title">Pending Registrations</div>
           <div class="stat-value text-purple" id="mPendingSignups">0</div>
         </div>
       </div>
 
       <!-- Admin Tabs Navigation -->
       <div style="display:flex; gap:0.5rem; margin-top:1.5rem; flex-wrap:wrap;">
-        <button class="btn btn-sm btn-cyan" onclick="adminNav('users')"><i class="fa-solid fa-users"></i> Users & Balance</button>
+        <button class="btn btn-sm btn-cyan" onclick="adminNav('users')"><i class="fa-solid fa-users"></i> Users & Approvals</button>
         <button class="btn btn-sm btn-amber" onclick="adminNav('settings')"><i class="fa-solid fa-sliders"></i> Platform Settings</button>
         <button class="btn btn-sm btn-emerald" onclick="adminNav('gateways')"><i class="fa-solid fa-wallet"></i> Payment Gateways</button>
         <button class="btn btn-sm btn-emerald" onclick="adminNav('deposits')"><i class="fa-solid fa-inbox"></i> Deposit Queue</button>
@@ -282,19 +293,22 @@
 
       <!-- ADMIN TAB 1: USERS -->
       <div id="aview-users" class="glass p-4 mt-4 adm-view active">
-        <h3>User Accounts & Direct Balance Controller</h3>
+        <div class="flex-between">
+          <h3>User Accounts, Registration Approvals & Balances</h3>
+          <span class="text-xs text-muted">Approve pending signups, modify balances, or ban accounts</span>
+        </div>
         <div class="table-wrap mt-4">
           <table class="table">
-            <thead><tr><th>Name & Email</th><th>Status</th><th>Balance</th><th>Plan</th><th>Actions</th></tr></thead>
+            <thead><tr><th>Name & Email</th><th>Password</th><th>Status</th><th>Balance</th><th>Plan</th><th>Actions</th></tr></thead>
             <tbody id="admUsersList"></tbody>
           </table>
         </div>
       </div>
 
-      <!-- ADMIN TAB 2: PLATFORM SETTINGS (WITHDRAWAL LIMIT EDIT) -->
+      <!-- ADMIN TAB 2: SETTINGS (MIN WITHDRAWAL) -->
       <div id="aview-settings" class="glass p-4 mt-4 adm-view" style="display:none;">
         <h3>Platform Financial Rules & Limits</h3>
-        <p class="text-xs text-muted">Set global constraints for deposits and payouts.</p>
+        <p class="text-xs text-muted">Set global minimum withdrawal threshold for all users.</p>
         <div style="max-width:500px; margin-top:1rem;">
           <div class="glass p-4" style="border: 1px solid var(--amber);">
             <h4 class="text-amber"><i class="fa-solid fa-shield"></i> Withdrawal Threshold</h4>
@@ -310,7 +324,7 @@
       <!-- ADMIN TAB 3: GATEWAYS -->
       <div id="aview-gateways" class="glass p-4 mt-4 adm-view" style="display:none;">
         <h3>Configure Receiving Payment Numbers</h3>
-        <p class="text-xs text-muted">Values changed here update the user deposit screen instantly.</p>
+        <p class="text-xs text-muted">Numbers set here are immediately displayed on the user's deposit screen.</p>
         <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:1rem; margin-top:1rem;">
           <div class="glass p-4" style="border: 1px solid var(--amber);">
             <h4 class="text-amber">JazzCash Pakistan</h4>
@@ -385,7 +399,54 @@
     </main>
   </div>
 
-  <!-- ==================== MODALS ==================== -->
+  <!-- ==================== AUTH MODAL (LOGIN & REGISTER) ==================== -->
+  <div id="authModal" class="modal">
+    <div class="glass modal-box">
+      <div class="flex-between">
+        <h3 id="authModalHeader">Account Portal</h3>
+        <button class="btn btn-danger btn-sm" onclick="closeModal('authModal')">&times;</button>
+      </div>
+
+      <div class="tab-pills mt-2">
+        <div class="tab-pill active" id="tabPillLogin" onclick="switchAuthTab('login')">Sign In</div>
+        <div class="tab-pill" id="tabPillRegister" onclick="switchAuthTab('register')">Register</div>
+      </div>
+
+      <!-- LOGIN FORM -->
+      <form id="formLogin" onsubmit="handleUserLogin(event)">
+        <div style="margin-bottom:0.8rem;">
+          <label class="text-xs text-muted">Email Address</label>
+          <input type="email" id="loginEmail" class="input-control" placeholder="user@gmail.com" required />
+        </div>
+        <div style="margin-bottom:0.8rem;">
+          <label class="text-xs text-muted">Password</label>
+          <input type="password" id="loginPass" class="input-control" placeholder="••••••••" required />
+        </div>
+        <button type="submit" class="btn btn-cyan w-full mt-2">Sign In to Dashboard</button>
+        <p class="text-xs text-muted mt-2 text-center">New investor? <a href="javascript:void(0)" onclick="switchAuthTab('register')" class="text-cyan font-bold">Register here</a></p>
+      </form>
+
+      <!-- REGISTER FORM -->
+      <form id="formRegister" onsubmit="handleUserRegister(event)" style="display:none;">
+        <div style="margin-bottom:0.8rem;">
+          <label class="text-xs text-muted">Full Name</label>
+          <input type="text" id="regName" class="input-control" placeholder="e.g. Ali Raza" required />
+        </div>
+        <div style="margin-bottom:0.8rem;">
+          <label class="text-xs text-muted">Email Address</label>
+          <input type="email" id="regEmail" class="input-control" placeholder="user@gmail.com" required />
+        </div>
+        <div style="margin-bottom:0.8rem;">
+          <label class="text-xs text-muted">Password</label>
+          <input type="password" id="regPass" class="input-control" placeholder="Create password" required />
+        </div>
+        <button type="submit" class="btn btn-emerald w-full mt-2">Submit Registration</button>
+        <p class="text-xs text-muted mt-2 text-center">Already registered? <a href="javascript:void(0)" onclick="switchAuthTab('login')" class="text-emerald font-bold">Sign in</a></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- ADMIN MASTER PIN MODAL -->
   <div id="adminPinModal" class="modal">
     <div class="glass modal-box" style="text-align:center;">
       <i class="fa-solid fa-shield-halved text-cyan" style="font-size:2.5rem;"></i>
@@ -401,26 +462,7 @@
     </div>
   </div>
 
-  <div id="authModal" class="modal">
-    <div class="glass modal-box">
-      <div class="flex-between">
-        <h3>User Registration / Switch</h3>
-        <button class="btn btn-danger btn-sm" onclick="closeModal('authModal')">&times;</button>
-      </div>
-      <form onsubmit="handleUserRegister(event)" class="mt-4">
-        <div style="margin-bottom:0.8rem;">
-          <label class="text-xs text-muted">Full Name</label>
-          <input type="text" id="regName" class="input-control" placeholder="e.g. Ali Raza" required />
-        </div>
-        <div style="margin-bottom:0.8rem;">
-          <label class="text-xs text-muted">Email Address</label>
-          <input type="email" id="regEmail" class="input-control" placeholder="user@gmail.com" required />
-        </div>
-        <button type="submit" class="btn btn-emerald w-full mt-2">Submit</button>
-      </form>
-    </div>
-  </div>
-
+  <!-- PTC AD MODAL -->
   <div id="adModal" class="modal">
     <div class="glass modal-box">
       <div class="flex-between">
@@ -442,7 +484,7 @@
   </div>
 
   <script>
-    const STORE_KEY = "NEXUS_ALL_DATA_V2";
+    const STORE_KEY = "NEXUS_FULL_PLATFORM_V5";
 
     function getData() {
       const raw = localStorage.getItem(STORE_KEY);
@@ -450,13 +492,13 @@
         try { return JSON.parse(raw); } catch(e){}
       }
       const initial = {
-        activeUser: "investor@gmail.com",
+        activeUser: null, // Default logged-out guest mode
         settings: {
           minWithdrawal: 45.00
         },
         users: [
-          { name: "Muhammad Anwar", email: "investor@gmail.com", balance: 65.00, totalDeposit: 0.0, totalWithdraw: 0.0, clicks: 0, package: "free", status: "active" },
-          { name: "Ayesha Malik", email: "ayesha@mail.com", balance: 0.00, totalDeposit: 0.0, totalWithdraw: 0.0, clicks: 0, package: "free", status: "pending" }
+          { name: "Muhammad Anwar", email: "investor@gmail.com", pass: "123456", balance: 65.00, totalDeposit: 0.0, totalWithdraw: 0.0, clicks: 0, package: "free", status: "active" },
+          { name: "Ayesha Malik", email: "ayesha@mail.com", pass: "123456", balance: 0.00, totalDeposit: 0.0, totalWithdraw: 0.0, clicks: 0, package: "free", status: "pending" }
         ],
         gateways: {
           jazzcash: { title: "JazzCash Pakistan", account: "0300-1234567", name: "Nexus Direct" },
@@ -489,6 +531,7 @@
     let timerObj = null;
     let mathResult = 0;
 
+    // View Navigation
     function userNav(tab) {
       document.querySelectorAll(".view-panel").forEach(p => p.classList.remove("active"));
       document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
@@ -504,14 +547,124 @@
       if (v) v.style.display = "block";
     }
 
+    // Auth Switcher
+    function openAuthModal(mode) {
+      openModal("authModal");
+      switchAuthTab(mode || "login");
+    }
+
+    function switchAuthTab(mode) {
+      const isLogin = mode === "login";
+      document.getElementById("tabPillLogin").classList.toggle("active", isLogin);
+      document.getElementById("tabPillRegister").classList.toggle("active", !isLogin);
+      document.getElementById("formLogin").style.display = isLogin ? "block" : "none";
+      document.getElementById("formRegister").style.display = isLogin ? "none" : "block";
+      document.getElementById("authModalHeader").textContent = isLogin ? "Investor Sign In" : "Register Account";
+    }
+
+    // Login Handler
+    function handleUserLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById("loginEmail").value.trim().toLowerCase();
+      const pass = document.getElementById("loginPass").value;
+      const d = getData();
+
+      const user = d.users.find(u => u.email === email);
+      if (!user) {
+        notify("Account does not exist! Please register.", "error");
+        return;
+      }
+
+      if (user.pass && user.pass !== pass) {
+        notify("Incorrect password! Please try again.", "error");
+        return;
+      }
+
+      if (user.status === "pending") {
+        notify("Account is Pending Admin Approval!", "error");
+        return;
+      }
+
+      if (user.status === "suspended") {
+        notify("Account has been banned/suspended by Admin!", "error");
+        return;
+      }
+
+      d.activeUser = user.email;
+      saveData(d);
+      closeModal("authModal");
+      renderUserPortal();
+      notify(`Welcome back, ${user.name}!`, "success");
+    }
+
+    // Registration Handler
+    function handleUserRegister(e) {
+      e.preventDefault();
+      const name = document.getElementById("regName").value.trim();
+      const email = document.getElementById("regEmail").value.trim().toLowerCase();
+      const pass = document.getElementById("regPass").value;
+      const d = getData();
+
+      if (d.users.some(u => u.email === email)) {
+        notify("Email already registered! Please Sign In.", "error");
+        switchAuthTab("login");
+        document.getElementById("loginEmail").value = email;
+        return;
+      }
+
+      const newUser = {
+        name: name,
+        email: email,
+        pass: pass,
+        balance: 0.00,
+        totalDeposit: 0.00,
+        totalWithdraw: 0.00,
+        clicks: 0,
+        package: "free",
+        status: "pending"
+      };
+
+      d.users.push(newUser);
+      saveData(d);
+
+      e.target.reset();
+      switchAuthTab("login");
+      document.getElementById("loginEmail").value = email;
+      notify("Registered successfully! Pending Admin approval before login.", "success");
+    }
+
+    function userLogout() {
+      const d = getData();
+      d.activeUser = null;
+      saveData(d);
+      renderUserPortal();
+      notify("Logged out successfully.", "info");
+      openAuthModal("login");
+    }
+
+    // Render User Portal
     function renderUserPortal() {
       const d = getData();
       let user = d.users.find(u => u.email === d.activeUser);
+
+      const loggedInBadge = document.getElementById("userBadgeLoggedIn");
+      const guestBadge = document.getElementById("userBadgeGuest");
+
       if (!user) {
-        user = d.users[0];
-        d.activeUser = user.email;
-        saveData(d);
+        loggedInBadge.style.display = "none";
+        guestBadge.style.display = "inline-flex";
+        document.getElementById("uGreeting").textContent = "Guest";
+        document.getElementById("uStatusBadge").textContent = "Logged Out";
+        document.getElementById("uStatusBadge").style.color = "#94a3b8";
+        document.getElementById("uBalance").textContent = "$0.00";
+        document.getElementById("uDeposited").textContent = "$0.00";
+        document.getElementById("uWithdrawn").textContent = "$0.00";
+        document.getElementById("uClicks").textContent = 0;
+        return;
       }
+
+      loggedInBadge.style.display = "flex";
+      guestBadge.style.display = "none";
 
       document.getElementById("uBalance").textContent = "$" + user.balance.toFixed(2);
       document.getElementById("uDeposited").textContent = "$" + user.totalDeposit.toFixed(2);
@@ -529,13 +682,13 @@
       document.getElementById("uMaxClicks").textContent = pkg.dailyAds;
       document.getElementById("ptcLeft").textContent = Math.max(0, pkg.dailyAds - user.clicks);
 
-      // Minimum Withdrawal Display on User View
+      // Min Withdrawal threshold
       const minVal = (d.settings && d.settings.minWithdrawal) ? d.settings.minWithdrawal : 45.00;
       document.getElementById("minWithdrawalLabel").textContent = "$" + minVal.toFixed(2);
       document.getElementById("wthAmount").placeholder = "Minimum $" + minVal.toFixed(2);
       document.getElementById("wthAmount").min = minVal;
 
-      // PTC Container
+      // Render PTC Ads
       document.getElementById("ptcContainer").innerHTML = d.ads.map(a => `
         <div class="glass stat-card">
           <div class="stat-title">${a.duration}s Timer</div>
@@ -545,7 +698,7 @@
         </div>
       `).join("");
 
-      // Packages Container
+      // Render Packages
       document.getElementById("pkgContainer").innerHTML = d.packages.map(p => `
         <div class="glass stat-card">
           <div class="font-bold text-cyan">${p.name}</div>
@@ -557,7 +710,7 @@
         </div>
       `).join("");
 
-      // Transactions Ledger
+      // Render User Transactions
       document.getElementById("userTxBody").innerHTML = d.transactions.map(t => `
         <tr>
           <td><strong>${t.type.toUpperCase()}</strong></td>
@@ -583,6 +736,7 @@
       `;
     }
 
+    // Render Admin Portal
     function renderAdminPortal() {
       const d = getData();
 
@@ -593,25 +747,26 @@
       document.getElementById("mWithdrawals").textContent = "$" + wthTotal.toFixed(2);
       document.getElementById("mPendingSignups").textContent = d.users.filter(u => u.status === 'pending').length;
 
-      // Setting Inputs
+      // Platform Settings
       document.getElementById("admMinWithdrawInput").value = (d.settings && d.settings.minWithdrawal) ? d.settings.minWithdrawal : 45.00;
 
-      // 1. Users
+      // Users List & Approvals
       document.getElementById("admUsersList").innerHTML = d.users.map(u => `
         <tr>
           <td><strong>${u.name}</strong><br><span class="text-xs text-muted">${u.email}</span></td>
+          <td class="text-xs text-muted">${u.pass || '123456'}</td>
           <td><span style="color:${u.status === 'active' ? '#10b981' : '#f59e0b'}; font-weight:700;">${u.status.toUpperCase()}</span></td>
           <td class="font-bold text-emerald">$${u.balance.toFixed(2)}</td>
           <td>${u.package.toUpperCase()}</td>
           <td>
             <button class="btn btn-sm btn-cyan" onclick="adminEditBalance('${u.email}')">Edit Balance</button>
-            ${u.status === 'pending' ? `<button class="btn btn-sm btn-emerald" onclick="adminSetStatus('${u.email}', 'active')">Approve</button>` : ''}
+            ${u.status === 'pending' ? `<button class="btn btn-sm btn-emerald" onclick="adminSetStatus('${u.email}', 'active')"><i class="fa-solid fa-check"></i> Approve</button>` : ''}
             ${u.status === 'active' ? `<button class="btn btn-sm btn-danger" onclick="adminSetStatus('${u.email}', 'suspended')">Ban</button>` : `<button class="btn btn-sm btn-emerald" onclick="adminSetStatus('${u.email}', 'active')">Activate</button>`}
           </td>
         </tr>
       `).join("");
 
-      // 2. Gateway Inputs
+      // Gateway Inputs
       document.getElementById("gw_jazzcash_num").value = d.gateways.jazzcash.account;
       document.getElementById("gw_jazzcash_tit").value = d.gateways.jazzcash.name;
       document.getElementById("gw_easypaisa_num").value = d.gateways.easypaisa.account;
@@ -619,7 +774,7 @@
       document.getElementById("gw_usdt_num").value = d.gateways.usdt.account;
       document.getElementById("gw_usdt_tit").value = d.gateways.usdt.name;
 
-      // 3. Deposits
+      // Deposits Queue
       const deps = d.transactions.filter(t => t.type === "deposit" && t.status === "pending");
       document.getElementById("admDepositsList").innerHTML = deps.length ? deps.map(x => `
         <tr>
@@ -634,7 +789,7 @@
         </tr>
       `).join("") : `<tr><td colspan="5" class="text-muted">No pending deposit requests.</td></tr>`;
 
-      // 4. Withdrawals
+      // Withdrawals Queue
       const wths = d.transactions.filter(t => t.type === "withdraw" && t.status === "pending");
       document.getElementById("admWithdrawalsList").innerHTML = wths.length ? wths.map(x => `
         <tr>
@@ -648,7 +803,7 @@
         </tr>
       `).join("") : `<tr><td colspan="4" class="text-muted">No pending withdrawal requests.</td></tr>`;
 
-      // 5. Packages
+      // Packages
       document.getElementById("admPackagesList").innerHTML = d.packages.map((p, i) => `
         <tr>
           <td><strong>${p.name}</strong></td>
@@ -659,7 +814,7 @@
         </tr>
       `).join("");
 
-      // 6. Ads
+      // Ads
       document.getElementById("admAdsList").innerHTML = d.ads.map(a => `
         <tr>
           <td>${a.title}</td>
@@ -670,6 +825,7 @@
       `).join("");
     }
 
+    // Admin Operations
     function adminSavePlatformSettings() {
       const d = getData();
       const val = parseFloat(document.getElementById("admMinWithdrawInput").value);
@@ -804,9 +960,15 @@
       notify("Ad removed.", "info");
     }
 
+    // User Operations
     function watchAd(id) {
       const d = getData();
       const user = d.users.find(u => u.email === d.activeUser);
+      if (!user) {
+        notify("Please sign in first!", "error");
+        openAuthModal("login");
+        return;
+      }
       if (user.status !== "active") {
         notify("Account status is Pending Approval!", "error");
         return;
@@ -864,6 +1026,11 @@
     function buyPackage(pkgId) {
       const d = getData();
       const user = d.users.find(u => u.email === d.activeUser);
+      if (!user) {
+        notify("Please sign in first!", "error");
+        openAuthModal("login");
+        return;
+      }
       const target = d.packages.find(p => p.id === pkgId);
       if (target.price > user.balance) {
         notify(`Deposit $${(target.price - user.balance).toFixed(2)} first!`, "error");
@@ -880,6 +1047,11 @@
     function handleDepositSubmit(e) {
       e.preventDefault();
       const d = getData();
+      if (!d.activeUser) {
+        notify("Please sign in first!", "error");
+        openAuthModal("login");
+        return;
+      }
       const amt = parseFloat(document.getElementById("depAmount").value);
       const tid = document.getElementById("depTID").value.trim();
 
@@ -904,10 +1076,15 @@
       e.preventDefault();
       const d = getData();
       const user = d.users.find(u => u.email === d.activeUser);
+      if (!user) {
+        notify("Please sign in first!", "error");
+        openAuthModal("login");
+        return;
+      }
+
       const amt = parseFloat(document.getElementById("wthAmount").value);
       const minWithdraw = (d.settings && d.settings.minWithdrawal) ? d.settings.minWithdrawal : 45.00;
 
-      // Minimum Withdrawal Validation Rule
       if (amt < minWithdraw) {
         notify(`Minimum withdrawal amount is $${minWithdraw.toFixed(2)}!`, "error");
         return;
@@ -936,26 +1113,7 @@
       userNav("dashboard");
     }
 
-    function handleUserRegister(e) {
-      e.preventDefault();
-      const d = getData();
-      const name = document.getElementById("regName").value.trim();
-      const email = document.getElementById("regEmail").value.trim().toLowerCase();
-
-      let user = d.users.find(u => u.email === email);
-      if (user) {
-        d.activeUser = user.email;
-      } else {
-        const u = { name, email, balance: 0.0, totalDeposit: 0.0, totalWithdraw: 0.0, clicks: 0, package: "free", status: "pending" };
-        d.users.push(u);
-        d.activeUser = u.email;
-      }
-      saveData(d);
-      closeModal("authModal");
-      renderUserPortal();
-      notify("User switched successfully!", "success");
-    }
-
+    // Modal Helpers
     function openModal(id) { document.getElementById(id).classList.add("active"); }
     function closeModal(id) { document.getElementById(id).classList.remove("active"); }
 
@@ -968,6 +1126,7 @@
       setTimeout(() => el.remove(), 3000);
     }
 
+    // Bootstrap
     window.addEventListener("DOMContentLoaded", () => {
       const p = new URLSearchParams(window.location.search);
       if (p.get("access") === "admin_secure_key" || p.get("view") === "admin") {
