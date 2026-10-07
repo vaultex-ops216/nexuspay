@@ -1,411 +1,272 @@
-/**
- * NEXUSPAY ROCK-SOLID OPERATIONAL ENGINE
- */
-
-const GATEWAYS = {
-  jazzcash: { title: "JazzCash Pakistan", account: "0300-1234567", name: "Nexus Direct" },
-  easypaisa: { title: "Easypaisa Pakistan", account: "0345-7654321", name: "Nexus Escrow" },
-  usdt: { title: "USDT (TRC-20)", account: "TXn92KsmLK3B91Yhd912Nsd19XzLKqwert", name: "Tron Treasury" }
-};
-
-// Global Store
-let packages = [
-  { id: "free", name: "Free Tier", price: 0, dailyAds: 5, reward: 0.02 },
-  { id: "silver", name: "Silver VIP", price: 20, dailyAds: 15, reward: 0.05 },
-  { id: "gold", name: "Gold VIP", price: 50, dailyAds: 30, reward: 0.10 }
-];
-
-let users = [
-  { email: "investor@gmail.com", balance: 10.00, totalDeposit: 0.0, totalWithdraw: 0.0, clicks: 0, package: "free", status: "active" },
-  { email: "admin@nexus.io", balance: 500.00, totalDeposit: 1000.0, totalWithdraw: 0.0, clicks: 0, package: "gold", status: "active" }
-];
-
-let currentUser = users[0];
-
-let ads = [
-  { id: 1, title: "Binance Staking Reward", reward: 0.05, duration: 6 },
-  { id: 2, title: "Bybit Launchpool Offer", reward: 0.08, duration: 8 },
-  { id: 3, title: "Web3 Crypto Nodes", reward: 0.12, duration: 10 }
-];
-
-let txList = [];
-
-// Watch Ad State
-let activeAd = null;
-let timerObj = null;
-let mathResult = 0;
-let editEmail = "";
-
-// Init
-window.addEventListener("DOMContentLoaded", () => {
-  // Check admin url
-  const p = new URLSearchParams(window.location.search);
-  if (p.get("access") === "admin_secure_key" || p.get("view") === "admin") {
-    goView("admin");
-  } else {
-    goView("dashboard");
-  }
-
-  refreshAll();
-  renderGatewayInfo();
-});
-
-// View Navigation
-function goView(viewId) {
-  document.querySelectorAll(".view-panel").forEach(p => p.classList.remove("active"));
-  document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
-
-  const target = document.getElementById("view-" + viewId);
-  if (target) target.classList.add("active");
-
-  const btn = document.getElementById("btn-" + viewId);
-  if (btn) btn.classList.add("active");
-
-  if (viewId === "admin") {
-    renderAdmin();
-  }
-}
-
-function refreshAll() {
-  // Update dashboard UI
-  document.getElementById("uBalance").textContent = "$" + currentUser.balance.toFixed(2);
-  document.getElementById("uDeposited").textContent = "$" + currentUser.totalDeposit.toFixed(2);
-  document.getElementById("uWithdrawn").textContent = "$" + currentUser.totalWithdraw.toFixed(2);
-  document.getElementById("uClicks").textContent = currentUser.clicks;
-  document.getElementById("topUserEmail").textContent = currentUser.email;
-
-  const pkg = packages.find(p => p.id === currentUser.package) || packages[0];
-  document.getElementById("uTier").textContent = pkg.name.toUpperCase();
-  document.getElementById("uMaxClicks").textContent = pkg.dailyAds;
-  document.getElementById("ptcLeft").textContent = Math.max(0, pkg.dailyAds - currentUser.clicks);
-
-  renderPTC();
-  renderPackages();
-  renderLedger();
-}
-
-// PTC
-function renderPTC() {
-  const c = document.getElementById("ptcContainer");
-  c.innerHTML = ads.map(a => `
-    <div class="glass stat-card">
-      <div class="stat-title">${a.duration}s Timer</div>
-      <div class="font-bold mt-2">${a.title}</div>
-      <div class="stat-value text-emerald">$${a.reward.toFixed(2)}</div>
-      <button class="btn btn-emerald w-full mt-2" onclick="watchAd(${a.id})">Watch Ad</button>
-    </div>
-  `).join("");
-}
-
-function watchAd(id) {
-  const pkg = packages.find(p => p.id === currentUser.package) || packages[0];
-  if (currentUser.clicks >= pkg.dailyAds) {
-    notify("Daily click limit reached for your tier!", "error");
-    return;
-  }
-
-  activeAd = ads.find(a => a.id === id);
-  const m = document.getElementById("adModal");
-  m.style.display = "flex";
-  document.getElementById("adCaptchaBox").style.display = "none";
-  document.getElementById("adModalTitle").textContent = activeAd.title;
-
-  let left = activeAd.duration;
-  const bar = document.getElementById("adProgress");
-  const t = document.getElementById("adTimer");
-  bar.style.width = "0%";
-
-  clearInterval(timerObj);
-  timerObj = setInterval(() => {
-    left -= 0.1;
-    bar.style.width = (((activeAd.duration - left) / activeAd.duration) * 100) + "%";
-    t.textContent = Math.max(0, Math.ceil(left)) + "s";
-
-    if (left <= 0) {
-      clearInterval(timerObj);
-      const n1 = Math.floor(Math.random() * 8) + 2;
-      const n2 = Math.floor(Math.random() * 8) + 1;
-      mathResult = n1 + n2;
-      document.getElementById("captchaQ").textContent = `${n1} + ${n2} = ?`;
-      document.getElementById("captchaA").value = "";
-      document.getElementById("adCaptchaBox").style.display = "block";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NexusPay | Master Admin Console</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #06090e;
+      --card: rgba(15, 23, 42, 0.95);
+      --border: rgba(255, 255, 255, 0.1);
+      --cyan: #06b6d4;
+      --emerald: #10b981;
+      --amber: #f59e0b;
+      --red: #ef4444;
+      --text: #f8fafc;
+      --muted: #94a3b8;
     }
-  }, 100);
-}
+    * { margin:0; padding:0; box-sizing:border-box; font-family:'Inter', sans-serif; }
+    body { background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+    .glass { background: var(--card); border: 1px solid var(--border); border-radius: 12px; }
+    .text-cyan { color: var(--cyan); }
+    .text-emerald { color: var(--emerald); }
+    .text-amber { color: var(--amber); }
+    .text-muted { color: var(--muted); }
+    .flex-between { display: flex; justify-content: space-between; align-items: center; }
+    .font-bold { font-weight: 700; }
+    .w-full { width: 100%; }
+    .p-4 { padding: 1rem; }
+    .mt-4 { margin-top: 1rem; }
+    .mt-6 { margin-top: 1.5rem; }
 
-function verifyCaptcha() {
-  const ans = parseInt(document.getElementById("captchaA").value, 10);
-  if (ans === mathResult) {
-    currentUser.balance += activeAd.reward;
-    currentUser.clicks++;
-    document.getElementById("adModal").style.display = "none";
-    refreshAll();
-    notify(`Earned $${activeAd.reward.toFixed(2)}!`, "success");
-  } else {
-    notify("Wrong captcha answer!", "error");
-  }
-}
+    /* Admin Top Header */
+    .admin-bar { padding: 1rem 1.5rem; border-left: 4px solid var(--amber); border-radius: 0; }
+    .btn { padding: 0.45rem 0.9rem; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; font-size: 0.85rem; }
+    .btn-cyan { background: var(--cyan); color: black; }
+    .btn-emerald { background: var(--emerald); color: black; }
+    .btn-amber { background: var(--amber); color: black; }
+    .btn-danger { background: transparent; border: 1px solid var(--red); color: var(--red); }
+    .btn-sm { padding: 0.25rem 0.6rem; font-size: 0.75rem; }
+    .input-control { background: #0b1120; border: 1px solid var(--border); color: white; padding: 0.6rem; border-radius: 8px; outline: none; width: 100%; }
 
-// Packages
-function renderPackages() {
-  const c = document.getElementById("pkgContainer");
-  c.innerHTML = packages.map(p => `
-    <div class="glass stat-card ${p.id === 'gold' ? 'border-amber' : ''}">
-      <div class="font-bold text-cyan">${p.name}</div>
-      <div class="stat-value text-emerald">${p.price === 0 ? "FREE" : "$" + p.price}</div>
-      <div class="text-xs text-muted mt-2">${p.dailyAds} Ads Daily • Earn $${p.reward}/ad</div>
-      <button class="btn btn-cyan w-full mt-4" onclick="buyPackage('${p.id}')">
-        ${currentUser.package === p.id ? 'Active Plan' : 'Select Plan'}
-      </button>
+    /* Stats */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-top: 1rem; }
+    .stat-card { padding: 1.2rem; border-left: 4px solid var(--cyan); }
+    .stat-title { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; }
+    .stat-value { font-size: 1.6rem; font-weight: 800; margin-top: 0.2rem; }
+
+    .main-wrap { max-width: 1200px; width: 100%; margin: 1.5rem auto; padding: 0 1rem; flex: 1; }
+    .table-wrap { overflow-x: auto; width: 100%; }
+    .table { width: 100%; border-collapse: collapse; text-align: left; }
+    .table th, .table td { padding: 0.75rem; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+
+    /* Lock Screen Modal */
+    .lock-screen { position: fixed; top:0; left:0; width:100%; height:100%; background: #030712; display: flex; align-items: center; justify-content: center; z-index: 10000; }
+    .lock-box { width: 100%; max-width: 400px; padding: 2rem; text-align: center; }
+
+    .toast-box { position: fixed; top: 1rem; right: 1rem; z-index: 10001; display: flex; flex-direction: column; gap: 0.5rem; }
+    .toast { padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.85rem; color: white; background: #065f46; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+    .toast-error { background: #991b1b; }
+    .toast-info { background: #0e3b5e; }
+  </style>
+</head>
+<body>
+
+  <!-- Security Gate PIN 778899 -->
+  <div id="lockScreen" class="lock-screen">
+    <div class="glass lock-box">
+      <i class="fa-solid fa-shield-halved text-cyan" style="font-size: 2.5rem;"></i>
+      <h2 class="mt-4">Master Admin Auth</h2>
+      <p class="text-muted text-xs mt-1">Enter Master Admin PIN to unlock management console</p>
+      <form onsubmit="unlockConsole(event)" class="mt-4">
+        <input type="password" id="adminPinInput" class="input-control text-center" style="font-size: 1.2rem; letter-spacing: 4px;" placeholder="PIN" required autofocus />
+        <button type="submit" class="btn btn-cyan w-full mt-4">Unlock Console</button>
+      </form>
     </div>
-  `).join("");
-}
+  </div>
 
-function buyPackage(pkgId) {
-  const target = packages.find(p => p.id === pkgId);
-  if (target.price > currentUser.balance) {
-    notify(`Insufficient balance! Deposit $${(target.price - currentUser.balance).toFixed(2)} first.`, "error");
-    goView("deposit");
-    return;
-  }
-  currentUser.balance -= target.price;
-  currentUser.package = target.id;
-  refreshAll();
-  notify(`Upgraded to ${target.name}!`, "success");
-}
+  <div id="toastBox" class="toast-box"></div>
 
-// Deposit
-function renderGatewayInfo() {
-  const g = document.getElementById("depGateway").value;
-  const info = GATEWAYS[g];
-  document.getElementById("gatewayInfoBox").innerHTML = `
-    <strong>${info.title}</strong><br>
-    Account: <span class="text-cyan font-bold">${info.account}</span><br>
-    Name: ${info.name}
-  `;
-}
+  <!-- Top Admin Bar -->
+  <header class="glass admin-bar flex-between">
+    <div>
+      <h2><i class="fa-solid fa-crown text-amber"></i> NexusPay Administration Portal</h2>
+      <span class="text-xs text-cyan">Master Admin Console Active</span>
+    </div>
+    <a href="index.html" class="btn btn-danger btn-sm"><i class="fa-solid fa-arrow-left"></i> View User Site</a>
+  </header>
 
-function onDeposit(e) {
-  e.preventDefault();
-  const amt = parseFloat(document.getElementById("depAmount").value);
-  const tid = document.getElementById("depTID").value.trim();
+  <main class="main-wrap">
 
-  txList.unshift({
-    id: "DEP-" + Date.now().toString().slice(-4),
-    user: currentUser.email,
-    type: "deposit",
-    method: document.getElementById("depGateway").value.toUpperCase(),
-    tid: tid,
-    amount: amt,
-    status: "pending"
-  });
+    <!-- Platform Quick Metrics -->
+    <div class="stats-grid">
+      <div class="glass stat-card">
+        <div class="stat-title">Platform Users</div>
+        <div class="stat-value text-cyan" id="mTotalUsers">0</div>
+      </div>
+      <div class="glass stat-card" style="border-left-color: var(--emerald);">
+        <div class="stat-title">Approved Deposits</div>
+        <div class="stat-value text-emerald" id="mTotalDeposits">$0.00</div>
+      </div>
+      <div class="glass stat-card" style="border-left-color: var(--amber);">
+        <div class="stat-title">Pending Withdrawals</div>
+        <div class="stat-value text-amber" id="mPendingWithdrawals">$0.00</div>
+      </div>
+      <div class="glass stat-card" style="border-left-color: #a855f7;">
+        <div class="stat-title">Pending Registrations</div>
+        <div class="stat-value text-purple" id="mPendingUsers">0</div>
+      </div>
+    </div>
 
-  e.target.reset();
-  notify("Deposit submitted for Admin verification!", "success");
-  refreshAll();
-  goView("dashboard");
-}
+    <!-- Admin Navigation Tabs -->
+    <div style="display:flex; gap:0.5rem; margin-top:1.5rem; flex-wrap:wrap;">
+      <button class="btn btn-sm btn-cyan" onclick="setTab('users')"><i class="fa-solid fa-users"></i> User Accounts & Requests</button>
+      <button class="btn btn-sm btn-emerald" onclick="setTab('gateways')"><i class="fa-solid fa-wallet"></i> Payment Gateways Editor</button>
+      <button class="btn btn-sm btn-emerald" onclick="setTab('deposits')"><i class="fa-solid fa-inbox"></i> Deposit Queue</button>
+      <button class="btn btn-sm btn-amber" onclick="setTab('withdrawals')"><i class="fa-solid fa-hand-holding-dollar"></i> Withdrawal Queue</button>
+      <button class="btn btn-sm btn-cyan" onclick="setTab('packages')"><i class="fa-solid fa-gem"></i> Packages</button>
+      <button class="btn btn-sm btn-emerald" onclick="setTab('ads')"><i class="fa-solid fa-bullhorn"></i> PTC Ads</button>
+    </div>
 
-// Withdraw
-function onWithdraw(e) {
-  e.preventDefault();
-  const amt = parseFloat(document.getElementById("wthAmount").value);
-  if (amt > currentUser.balance) {
-    notify("Amount exceeds available balance!", "error");
-    return;
-  }
+    <!-- TAB 1: USERS & REGISTRATION REQUESTS -->
+    <div id="tab-users" class="glass p-4 mt-4 tab-content">
+      <div class="flex-between">
+        <h3>User Accounts, Registration Approval & Balance</h3>
+        <span class="text-xs text-muted">Approve pending signups or edit balances</span>
+      </div>
+      <div class="table-wrap mt-3">
+        <table class="table">
+          <thead><tr><th>Name & Email</th><th>Status</th><th>Balance</th><th>Plan</th><th>Actions</th></tr></thead>
+          <tbody id="admUsersBody"></tbody>
+        </table>
+      </div>
+    </div>
 
-  currentUser.balance -= amt;
-  txList.unshift({
-    id: "WTH-" + Date.now().toString().slice(-4),
-    user: currentUser.email,
-    type: "withdraw",
-    method: document.getElementById("wthGateway").value + " (" + document.getElementById("wthAccount").value + ")",
-    tid: "REVIEW",
-    amount: amt,
-    status: "pending"
-  });
+    <!-- TAB 2: PAYMENT GATEWAYS CONFIGURATION (CHANGE NUMBERS & TITLES) -->
+    <div id="tab-gateways" class="glass p-4 mt-4 tab-content" style="display:none;">
+      <h3>Edit Payment Gateways (JazzCash, Easypaisa, USDT)</h3>
+      <p class="text-xs text-muted">Whatever account numbers you set here will be displayed immediately to users on the deposit & withdraw forms.</p>
+      
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; margin-top: 1rem;">
+        
+        <!-- JazzCash Card -->
+        <div class="glass p-4" style="border: 1px solid var(--amber);">
+          <h4 class="text-amber"><i class="fa-solid fa-mobile-screen"></i> JazzCash Pakistan</h4>
+          <div class="mt-2">
+            <label class="text-xs text-muted">Account Number / Mobile</label>
+            <input type="text" id="gw_jazzcash_acc" class="input-control" />
+          </div>
+          <div class="mt-2">
+            <label class="text-xs text-muted">Account Holder Title</label>
+            <input type="text" id="gw_jazzcash_name" class="input-control" />
+          </div>
+          <button class="btn btn-amber btn-sm w-full mt-3" onclick="saveGateway('jazzcash')">Update JazzCash</button>
+        </div>
 
-  e.target.reset();
-  notify("Withdrawal submitted! Admin will process payout.", "info");
-  refreshAll();
-  goView("dashboard");
-}
+        <!-- Easypaisa Card -->
+        <div class="glass p-4" style="border: 1px solid var(--emerald);">
+          <h4 class="text-emerald"><i class="fa-solid fa-mobile-screen-button"></i> Easypaisa Pakistan</h4>
+          <div class="mt-2">
+            <label class="text-xs text-muted">Account Number / Mobile</label>
+            <input type="text" id="gw_easypaisa_acc" class="input-control" />
+          </div>
+          <div class="mt-2">
+            <label class="text-xs text-muted">Account Holder Title</label>
+            <input type="text" id="gw_easypaisa_name" class="input-control" />
+          </div>
+          <button class="btn btn-emerald btn-sm w-full mt-3" onclick="saveGateway('easypaisa')">Update Easypaisa</button>
+        </div>
 
-function renderLedger() {
-  const b = document.getElementById("userTxBody");
-  b.innerHTML = txList.map(t => `
-    <tr>
-      <td><strong>${t.type.toUpperCase()}</strong></td>
-      <td>${t.method}</td>
-      <td class="text-cyan">${t.tid}</td>
-      <td class="font-bold text-emerald">$${t.amount.toFixed(2)}</td>
-      <td><span style="color:${t.status === 'approved' ? '#10b981' : (t.status === 'rejected' ? '#ef4444' : '#f59e0b')}">${t.status.toUpperCase()}</span></td>
-    </tr>
-  `).join("");
-}
+        <!-- USDT Card -->
+        <div class="glass p-4" style="border: 1px solid var(--cyan);">
+          <h4 class="text-cyan"><i class="fa-brands fa-ethereum"></i> USDT (TRC-20 Tron)</h4>
+          <div class="mt-2">
+            <label class="text-xs text-muted">Tron TRC-20 Wallet Address</label>
+            <input type="text" id="gw_usdt_acc" class="input-control" />
+          </div>
+          <div class="mt-2">
+            <label class="text-xs text-muted">Wallet Title / Exchange</label>
+            <input type="text" id="gw_usdt_name" class="input-control" />
+          </div>
+          <button class="btn btn-cyan btn-sm w-full mt-3" onclick="saveGateway('usdt')">Update USDT Wallet</button>
+        </div>
 
-// Admin Logic
-function adminTab(tabId) {
-  document.querySelectorAll(".adm-sub").forEach(s => s.style.display = "none");
-  const el = document.getElementById("adm-" + tabId);
-  if (el) el.style.display = "block";
-}
+      </div>
+    </div>
 
-function renderAdmin() {
-  // Users
-  document.getElementById("admUsersBody").innerHTML = users.map(u => `
-    <tr>
-      <td>${u.email}</td>
-      <td>${u.status}</td>
-      <td class="font-bold text-emerald">$${u.balance.toFixed(2)}</td>
-      <td>${u.package.toUpperCase()}</td>
-      <td>
-        <button class="btn btn-sm btn-cyan" onclick="openBalModal('${u.email}', ${u.balance})">Edit $</button>
-      </td>
-    </tr>
-  `).join("");
+    <!-- TAB 3: DEPOSIT VERIFICATION -->
+    <div id="tab-deposits" class="glass p-4 mt-4 tab-content" style="display:none;">
+      <h3>Pending Deposit Verifications</h3>
+      <div class="table-wrap mt-3">
+        <table class="table">
+          <thead><tr><th>User</th><th>Gateway</th><th>TID / Hash</th><th>Amount</th><th>Action</th></tr></thead>
+          <tbody id="admDepositsBody"></tbody>
+        </table>
+      </div>
+    </div>
 
-  // Deposits
-  const deps = txList.filter(t => t.type === "deposit" && t.status === "pending");
-  document.getElementById("admDepositsBody").innerHTML = deps.length ? deps.map(d => `
-    <tr>
-      <td>${d.user}</td>
-      <td>${d.method}</td>
-      <td class="text-cyan">${d.tid}</td>
-      <td class="font-bold text-emerald">$${d.amount.toFixed(2)}</td>
-      <td>
-        <button class="btn btn-sm btn-emerald" onclick="approveDeposit('${d.id}', true)">Approve</button>
-        <button class="btn btn-sm btn-danger" onclick="approveDeposit('${d.id}', false)">Reject</button>
-      </td>
-    </tr>
-  `).join("") : `<tr><td colspan="5" class="text-muted">No pending deposits</td></tr>`;
+    <!-- TAB 4: WITHDRAWAL PAYOUTS -->
+    <div id="tab-withdrawals" class="glass p-4 mt-4 tab-content" style="display:none;">
+      <h3>Pending Withdrawal Requests</h3>
+      <div class="table-wrap mt-3">
+        <table class="table">
+          <thead><tr><th>User</th><th>Account / Wallet</th><th>Amount</th><th>Action</th></tr></thead>
+          <tbody id="admWithdrawalsBody"></tbody>
+        </table>
+      </div>
+    </div>
 
-  // Withdrawals
-  const wths = txList.filter(t => t.type === "withdraw" && t.status === "pending");
-  document.getElementById("admWithdrawalsBody").innerHTML = wths.length ? wths.map(w => `
-    <tr>
-      <td>${w.user}</td>
-      <td>${w.method}</td>
-      <td class="font-bold text-cyan">$${w.amount.toFixed(2)}</td>
-      <td>
-        <button class="btn btn-sm btn-emerald" onclick="approveWithdrawal('${w.id}', true)">Paid</button>
-        <button class="btn btn-sm btn-danger" onclick="approveWithdrawal('${w.id}', false)">Refund</button>
-      </td>
-    </tr>
-  `).join("") : `<tr><td colspan="4" class="text-muted">No pending withdrawals</td></tr>`;
+    <!-- TAB 5: PACKAGES -->
+    <div id="tab-packages" class="glass p-4 mt-4 tab-content" style="display:none;">
+      <h3>Package Pricing & Ad Limits</h3>
+      <div class="table-wrap mt-3">
+        <table class="table">
+          <thead><tr><th>Plan Name</th><th>Price ($)</th><th>Daily Ads</th><th>Earn/Ad ($)</th><th>Save</th></tr></thead>
+          <tbody id="admPackagesBody"></tbody>
+        </table>
+      </div>
+    </div>
 
-  // Packages
-  document.getElementById("admPackagesBody").innerHTML = packages.map((p, i) => `
-    <tr>
-      <td><strong>${p.name}</strong></td>
-      <td><input type="number" id="p_prc_${i}" value="${p.price}" class="input-control" style="max-width:80px;" /></td>
-      <td><input type="number" id="p_ads_${i}" value="${p.dailyAds}" class="input-control" style="max-width:80px;" /></td>
-      <td><button class="btn btn-sm btn-emerald" onclick="savePkg(${i})">Save</button></td>
-    </tr>
-  `).join("");
+    <!-- TAB 6: PTC ADS -->
+    <div id="tab-ads" class="glass p-4 mt-4 tab-content" style="display:none;">
+      <h3>Publish New PTC Ad</h3>
+      <form onsubmit="onAddAd(event)" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:0.5rem; margin-top:0.5rem;">
+        <input type="text" id="adTitle" placeholder="Ad Title" class="input-control" required />
+        <input type="number" id="adReward" step="0.01" placeholder="Reward ($)" class="input-control" required />
+        <input type="number" id="adDuration" placeholder="Duration (Seconds)" class="input-control" required />
+        <button type="submit" class="btn btn-emerald">Create Ad</button>
+      </form>
+      <h4 class="mt-4">Live PTC Campaigns</h4>
+      <div class="table-wrap mt-2">
+        <table class="table">
+          <thead><tr><th>Title</th><th>Reward</th><th>Duration</th><th>Action</th></tr></thead>
+          <tbody id="admAdsBody"></tbody>
+        </table>
+      </div>
+    </div>
 
-  // Ads
-  document.getElementById("admAdsBody").innerHTML = ads.map(a => `
-    <tr>
-      <td>${a.title}</td>
-      <td class="text-emerald font-bold">$${a.reward}</td>
-      <td>${a.duration}s</td>
-      <td><button class="btn btn-sm btn-danger" onclick="delAd(${a.id})">Delete</button></td>
-    </tr>
-  `).join("");
-}
+  </main>
 
-function openBalModal(email, current) {
-  editEmail = email;
-  document.getElementById("balTargetEmail").textContent = "Editing for: " + email;
-  document.getElementById("balNewAmount").value = current;
-  document.getElementById("balModal").style.display = "flex";
-}
-function closeBalModal() {
-  document.getElementById("balModal").style.display = "none";
-}
-function saveNewBalance() {
-  const val = parseFloat(document.getElementById("balNewAmount").value);
-  const u = users.find(x => x.email === editEmail);
-  if (u) {
-    u.balance = val;
-    closeBalModal();
-    renderAdmin();
-    refreshAll();
-    notify("Balance updated!", "success");
-  }
-}
-
-function approveDeposit(txId, ok) {
-  const t = txList.find(x => x.id === txId);
-  if (!t) return;
-  t.status = ok ? "approved" : "rejected";
-  if (ok) {
-    const u = users.find(x => x.email === t.user);
-    if (u) {
-      u.balance += t.amount;
-      u.totalDeposit += t.amount;
+  <script src="app.js"></script>
+  <script>
+    function unlockConsole(e) {
+      e.preventDefault();
+      const pin = document.getElementById("adminPinInput").value;
+      if (pin === "778899") {
+        document.getElementById("lockScreen").style.display = "none";
+        renderAdminDashboard();
+        notify("Master Console Unlocked!", "success");
+      } else {
+        notify("Invalid PIN Code!", "error");
+      }
     }
-    notify(`Approved! $${t.amount} added.`, "success");
-  } else {
-    notify("Deposit rejected.", "info");
-  }
-  renderAdmin();
-  refreshAll();
-}
 
-function approveWithdrawal(txId, ok) {
-  const t = txList.find(x => x.id === txId);
-  if (!t) return;
-  t.status = ok ? "approved" : "rejected";
-  if (!ok) {
-    const u = users.find(x => x.email === t.user);
-    if (u) u.balance += t.amount; // refund
-    notify("Withdrawal rejected & refunded.", "info");
-  } else {
-    const u = users.find(x => x.email === t.user);
-    if (u) u.totalWithdraw += t.amount;
-    notify("Withdrawal marked as Paid!", "success");
-  }
-  renderAdmin();
-  refreshAll();
-}
+    function setTab(name) {
+      document.querySelectorAll(".tab-content").forEach(c => c.style.display = "none");
+      const el = document.getElementById("tab-" + name);
+      if (el) el.style.display = "block";
+    }
 
-function savePkg(i) {
-  packages[i].price = parseFloat(document.getElementById(`p_prc_${i}`).value);
-  packages[i].dailyAds = parseInt(document.getElementById(`p_ads_${i}`).value, 10);
-  renderAdmin();
-  refreshAll();
-  notify("Package updated!", "success");
-}
-
-function onAddAd(e) {
-  e.preventDefault();
-  ads.push({
-    id: Date.now(),
-    title: document.getElementById("adTitle").value,
-    reward: parseFloat(document.getElementById("adReward").value),
-    duration: parseInt(document.getElementById("adDuration").value, 10)
-  });
-  e.target.reset();
-  renderAdmin();
-  refreshAll();
-  notify("Ad published!", "success");
-}
-
-function delAd(id) {
-  ads = ads.filter(a => a.id !== id);
-  renderAdmin();
-  refreshAll();
-  notify("Ad deleted.", "info");
-}
-
-function notify(txt, type) {
-  const box = document.getElementById("toastBox");
-  const el = document.createElement("div");
-  el.className = `toast ${type === 'error' ? 'toast-error' : (type === 'info' ? 'toast-info' : '')}`;
-  el.textContent = txt;
-  box.appendChild(el);
-  setTimeout(() => el.remove(), 3000);
-}
+    window.addEventListener("DOMContentLoaded", () => {
+      const p = new URLSearchParams(window.location.search);
+      if (p.get("access") === "admin_secure_key") {
+        document.getElementById("lockScreen").style.display = "none";
+        renderAdminDashboard();
+      }
+    });
+  </script>
+</body>
+</html>
