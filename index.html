@@ -3,315 +3,314 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NexusPay | Ultimate PTC & Investment Portal</title>
+  <title>NexusPay | PTC & Investment</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #090d16;
+      --card: rgba(17, 24, 39, 0.95);
+      --border: rgba(255, 255, 255, 0.1);
+      --cyan: #06b6d4;
+      --emerald: #10b981;
+      --amber: #f59e0b;
+      --red: #ef4444;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; font-family:'Inter', sans-serif; }
+    body { background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+    
+    .glass { background: var(--card); border: 1px solid var(--border); border-radius: 12px; }
+    .text-cyan { color: var(--cyan); }
+    .text-emerald { color: var(--emerald); }
+    .text-amber { color: var(--amber); }
+    .text-muted { color: var(--muted); }
+    .text-xs { font-size: 0.75rem; }
+    .text-sm { font-size: 0.875rem; }
+    .font-bold { font-weight: 700; }
+    .flex-between { display: flex; justify-content: space-between; align-items: center; }
+    .mt-2 { margin-top: 0.5rem; }
+    .mt-4 { margin-top: 1rem; }
+    .mt-6 { margin-top: 1.5rem; }
+    .w-full { width: 100%; }
+    .p-4 { padding: 1rem; }
+
+    /* Nav */
+    .navbar { padding: 0.8rem 1.5rem; border-radius: 0; position: sticky; top:0; z-index: 50; }
+    .nav-container { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+    .brand { font-size: 1.3rem; font-weight: 800; cursor: pointer; }
+    .nav-links { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+    .nav-btn { background: transparent; border: 1px solid transparent; color: var(--muted); padding: 0.45rem 0.85rem; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem; }
+    .nav-btn:hover, .nav-btn.active { color: var(--cyan); background: rgba(255,255,255,0.06); border-color: var(--border); }
+    .admin-pill { border: 1px solid var(--amber) !important; color: var(--amber) !important; }
+
+    /* Buttons & Inputs */
+    .btn { padding: 0.5rem 1rem; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; font-size: 0.85rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; }
+    .btn-emerald { background: var(--emerald); color: black; }
+    .btn-cyan { background: var(--cyan); color: black; }
+    .btn-amber { background: var(--amber); color: black; }
+    .btn-danger { background: transparent; border: 1px solid var(--red); color: var(--red); }
+    .btn-sm { padding: 0.25rem 0.6rem; font-size: 0.75rem; }
+    .input-control { background: #0f172a; border: 1px solid var(--border); color: white; padding: 0.6rem; border-radius: 8px; outline: none; width: 100%; }
+
+    /* Stats Grid */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-top: 1rem; }
+    .stat-card { padding: 1.2rem; border-left: 4px solid var(--cyan); }
+    .border-emerald { border-left-color: var(--emerald); }
+    .border-amber { border-left-color: var(--amber); }
+    .border-purple { border-left-color: #a855f7; }
+    .stat-title { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; }
+    .stat-value { font-size: 1.6rem; font-weight: 800; margin-top: 0.2rem; }
+
+    /* Layout */
+    .main-content { max-width: 1200px; width: 100%; margin: 1.5rem auto; padding: 0 1rem; flex: 1; }
+    .view-panel { display: none; }
+    .view-panel.active { display: block; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    @media(max-width: 768px) { .two-col { grid-template-columns: 1fr; } }
+
+    /* Table */
+    .table-wrap { overflow-x: auto; width: 100%; }
+    .table { width: 100%; border-collapse: collapse; text-align: left; }
+    .table th, .table td { padding: 0.75rem; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+
+    /* Modals - strictly display: none unless .active */
+    .modal { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 9999; padding: 1rem; }
+    .modal.active { display: flex !important; }
+    .modal-box { width: 100%; max-width: 480px; padding: 1.5rem; position: relative; }
+    
+    .toast-box { position: fixed; top: 1rem; right: 1rem; z-index: 10000; display: flex; flex-direction: column; gap: 0.5rem; }
+    .toast { padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.85rem; color: white; background: #065f46; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+    .toast-error { background: #991b1b; }
+    .toast-info { background: #0e3b5e; }
+  </style>
 </head>
 <body>
 
   <!-- Top Navigation -->
-  <nav class="navbar glass-panel">
+  <nav class="navbar glass">
     <div class="nav-container">
-      <div class="brand-logo" onclick="switchView('dashboard')">
+      <div class="brand" onclick="goView('dashboard')">
         <i class="fa-solid fa-bolt text-cyan"></i> NEXUS<span class="text-emerald">PAY</span>
       </div>
 
       <div class="nav-links">
-        <button class="nav-item active" onclick="switchView('dashboard')"><i class="fa-solid fa-chart-pie"></i> Dashboard</button>
-        <button class="nav-item" onclick="switchView('ptc')"><i class="fa-solid fa-play"></i> Watch Ads</button>
-        <button class="nav-item" onclick="switchView('packages')"><i class="fa-solid fa-gem"></i> Packages</button>
-        <button class="nav-item" onclick="switchView('deposit')"><i class="fa-solid fa-wallet"></i> Deposit</button>
-        <button class="nav-item" onclick="switchView('withdraw')"><i class="fa-solid fa-money-bill-transfer"></i> Withdraw</button>
-        <button class="nav-item admin-nav-btn hidden" id="adminNavBtn" onclick="switchView('admin')">
-          <i class="fa-solid fa-crown text-amber"></i> Admin Console
-        </button>
+        <button class="nav-btn active" id="btn-dashboard" onclick="goView('dashboard')"><i class="fa-solid fa-chart-pie"></i> Dashboard</button>
+        <button class="nav-btn" id="btn-ptc" onclick="goView('ptc')"><i class="fa-solid fa-play"></i> Watch Ads</button>
+        <button class="nav-btn" id="btn-packages" onclick="goView('packages')"><i class="fa-solid fa-gem"></i> Packages</button>
+        <button class="nav-btn" id="btn-deposit" onclick="goView('deposit')"><i class="fa-solid fa-wallet"></i> Deposit</button>
+        <button class="nav-btn" id="btn-withdraw" onclick="goView('withdraw')"><i class="fa-solid fa-money-bill-transfer"></i> Withdraw</button>
+        <button class="nav-btn admin-pill" id="btn-admin" onclick="goView('admin')"><i class="fa-solid fa-crown"></i> Admin Panel</button>
       </div>
 
-      <div class="user-badge" id="userNavBadge">
-        <span class="status-pill status-active" id="userNavStatus">Active</span>
-        <span id="navUserEmail" class="text-sm font-semibold">user@mail.com</span>
+      <div class="text-xs text-muted">
+        User: <span class="text-cyan font-bold" id="topUserEmail">investor@gmail.com</span>
       </div>
     </div>
   </nav>
 
-  <!-- Notification Toast Container -->
-  <div id="toastContainer" class="toast-container"></div>
+  <div id="toastBox" class="toast-box"></div>
 
-  <!-- Main Viewports -->
   <main class="main-content">
 
-    <!-- VIEW 1: USER DASHBOARD -->
-    <section id="view-dashboard" class="content-view active">
-      <div class="dashboard-header glass-panel">
+    <!-- VIEW 1: DASHBOARD -->
+    <section id="view-dashboard" class="view-panel active">
+      <div class="glass p-4 flex-between">
         <div>
-          <h2>Welcome, <span id="dashUserGreeting" class="text-cyan">Investor</span>!</h2>
-          <p class="text-muted">Account Tier: <span id="dashUserTier" class="badge-tier">FREE TIER</span></p>
+          <h2>Welcome, <span class="text-cyan" id="uGreeting">Investor</span>!</h2>
+          <p class="text-muted text-sm">Package Tier: <strong class="text-emerald" id="uTier">FREE TIER</strong></p>
         </div>
-        <div>
-          <button class="btn btn-emerald" onclick="switchView('ptc')"><i class="fa-solid fa-coins"></i> Earn Today</button>
-          <button class="btn btn-cyan" onclick="switchView('deposit')"><i class="fa-solid fa-plus-circle"></i> Add Funds</button>
+        <div style="display:flex; gap:0.5rem;">
+          <button class="btn btn-emerald" onclick="goView('ptc')"><i class="fa-solid fa-coins"></i> Earn Now</button>
+          <button class="btn btn-cyan" onclick="goView('deposit')"><i class="fa-solid fa-plus"></i> Deposit</button>
         </div>
       </div>
 
-      <!-- Stats Counters -->
       <div class="stats-grid">
-        <div class="stat-card glass-panel border-cyan">
+        <div class="glass stat-card">
           <div class="stat-title">Available Balance</div>
-          <div class="stat-value text-cyan" id="dashBalance">$0.00</div>
+          <div class="stat-value text-cyan" id="uBalance">$10.00</div>
         </div>
-        <div class="stat-card glass-panel border-emerald">
+        <div class="glass stat-card border-emerald">
           <div class="stat-title">Total Deposited</div>
-          <div class="stat-value text-emerald" id="dashTotalDeposit">$0.00</div>
+          <div class="stat-value text-emerald" id="uDeposited">$0.00</div>
         </div>
-        <div class="stat-card glass-panel border-purple">
+        <div class="glass stat-card border-purple">
           <div class="stat-title">Total Withdrawn</div>
-          <div class="stat-value text-purple" id="dashTotalWithdraw">$0.00</div>
+          <div class="stat-value" id="uWithdrawn">$0.00</div>
         </div>
-        <div class="stat-card glass-panel border-amber">
+        <div class="glass stat-card border-amber">
           <div class="stat-title">Today's Clicks</div>
-          <div class="stat-value"><span id="dashTodayClicks">0</span> / <span id="dashMaxClicks">5</span></div>
+          <div class="stat-value"><span id="uClicks">0</span> / <span id="uMaxClicks">5</span></div>
         </div>
       </div>
 
-      <!-- User's Recent Activity Table -->
-      <div class="glass-panel mt-6 p-4">
-        <h3 class="mb-2"><i class="fa-solid fa-clock-rotate-left text-cyan"></i> My Recent Transactions</h3>
-        <div class="table-responsive">
+      <div class="glass p-4 mt-6">
+        <h3><i class="fa-solid fa-clock-rotate-left text-cyan"></i> Transaction Ledger</h3>
+        <div class="table-wrap mt-2">
           <table class="table">
             <thead>
-              <tr><th>Type</th><th>Gateway & TID</th><th>Amount</th><th>Status</th><th>Date</th></tr>
+              <tr><th>Type</th><th>Method</th><th>TID</th><th>Amount</th><th>Status</th></tr>
             </thead>
-            <tbody id="userTxList"></tbody>
+            <tbody id="userTxBody"></tbody>
           </table>
         </div>
       </div>
     </section>
 
-    <!-- VIEW 2: PTC ADS ENGINE -->
-    <section id="view-ptc" class="content-view">
+    <!-- VIEW 2: PTC ADS -->
+    <section id="view-ptc" class="view-panel">
       <div class="flex-between">
-        <div>
-          <h2>PTC Advertisement Portal</h2>
-          <p class="text-muted">Watch sponsored ads for the duration and solve the anti-bot math question to earn instant rewards.</p>
-        </div>
-        <div class="glass-panel p-4" style="padding: 0.5rem 1rem;">
-          Remaining Clicks: <strong class="text-emerald" id="ptcRemainingClicks">5</strong>
+        <h2>PTC Ads Portal</h2>
+        <div class="glass p-4" style="padding:0.4rem 0.8rem;">
+          Clicks Left: <strong class="text-emerald" id="ptcLeft">5</strong>
         </div>
       </div>
-      <div class="ads-grid mt-4" id="adsContainer"></div>
+      <div class="stats-grid mt-4" id="ptcContainer"></div>
     </section>
 
-    <!-- VIEW 3: INVESTMENT / VIP PACKAGES -->
-    <section id="view-packages" class="content-view">
+    <!-- VIEW 3: PACKAGES -->
+    <section id="view-packages" class="view-panel">
       <h2>Investment & VIP Packages</h2>
-      <p class="text-muted">Upgrade packages to unlock more daily ads, higher rewards per click, and instant payouts.</p>
-      <div class="packages-grid mt-4" id="packagesContainer"></div>
+      <div class="stats-grid mt-4" id="pkgContainer"></div>
     </section>
 
-    <!-- VIEW 4: DEPOSIT GATEWAY -->
-    <section id="view-deposit" class="content-view">
-      <div class="two-column-layout">
-        <div class="form-card glass-panel">
+    <!-- VIEW 4: DEPOSIT -->
+    <section id="view-deposit" class="view-panel">
+      <div class="two-col">
+        <div class="glass p-4">
           <h2>Deposit Funds</h2>
-          <p class="text-muted text-sm">Send funds using our official payment channels and submit the Transaction ID below.</p>
-          <form id="depositForm" onsubmit="handleDepositSubmit(event)" class="mt-4">
-            <div class="form-group">
-              <label>Select Gateway</label>
-              <select id="depositMethodSelect" class="input-control" onchange="updateGatewayInfo()">
+          <form onsubmit="onDeposit(event)" class="mt-4">
+            <div style="margin-bottom:0.8rem;">
+              <label class="text-xs text-muted">Select Gateway</label>
+              <select id="depGateway" class="input-control" onchange="renderGatewayInfo()">
                 <option value="jazzcash">JazzCash (Pakistan)</option>
                 <option value="easypaisa">Easypaisa (Pakistan)</option>
                 <option value="usdt">USDT TRC-20 (Crypto)</option>
               </select>
             </div>
-            <div class="form-group">
-              <label>Deposit Amount ($ USD)</label>
-              <input type="number" id="depositAmount" class="input-control" min="5" step="0.01" value="20" required />
+            <div style="margin-bottom:0.8rem;">
+              <label class="text-xs text-muted">Deposit Amount ($ USD)</label>
+              <input type="number" id="depAmount" class="input-control" min="5" value="20" required />
             </div>
-            <div class="form-group">
-              <label>Transaction ID / Proof (TID)</label>
-              <input type="text" id="depositTID" class="input-control" placeholder="e.g. TID-9821731" required />
+            <div style="margin-bottom:0.8rem;">
+              <label class="text-xs text-muted">Transaction ID (TID) / Proof</label>
+              <input type="text" id="depTID" class="input-control" placeholder="e.g. JC-9921448" required />
             </div>
-            <button type="submit" class="btn btn-emerald w-full mt-4">
-              <i class="fa-solid fa-paper-plane"></i> Submit Deposit Verification
-            </button>
+            <button type="submit" class="btn btn-emerald w-full mt-2">Submit Deposit</button>
           </form>
         </div>
-
-        <div class="instructions-card glass-panel">
-          <h3>Payment Gateway Details</h3>
-          <div id="gatewayInfoBox" class="gateway-info-box mt-3"></div>
-          <div class="mt-4 p-4" style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; font-size: 0.8rem; color: #fde68a;">
-            <i class="fa-solid fa-shield-halved"></i>
-            All deposits are audited manually. As soon as the Admin approves your request, your balance is credited immediately.
-          </div>
+        <div class="glass p-4">
+          <h3>Payment Gateway Info</h3>
+          <div id="gatewayInfoBox" class="mt-4 text-sm"></div>
         </div>
       </div>
     </section>
 
-    <!-- VIEW 5: WITHDRAW MODULE -->
-    <section id="view-withdraw" class="content-view">
-      <div class="max-w-xl mx-auto form-card glass-panel">
+    <!-- VIEW 5: WITHDRAW -->
+    <section id="view-withdraw" class="view-panel">
+      <div class="glass p-4" style="max-width:550px; margin:0 auto;">
         <h2>Request Withdrawal</h2>
-        <p class="text-muted text-sm">Withdraw your account balance directly to your mobile wallet or crypto account.</p>
-
-        <form id="withdrawForm" onsubmit="handleWithdrawSubmit(event)" class="mt-4">
-          <div class="form-group">
-            <label>Payment Method</label>
-            <select id="withdrawMethodSelect" class="input-control">
+        <form onsubmit="onWithdraw(event)" class="mt-4">
+          <div style="margin-bottom:0.8rem;">
+            <label class="text-xs text-muted">Method</label>
+            <select id="wthGateway" class="input-control">
               <option value="JazzCash">JazzCash</option>
               <option value="Easypaisa">Easypaisa</option>
               <option value="USDT">USDT (TRC-20)</option>
             </select>
           </div>
-          <div class="form-group">
-            <label>Account Number / Wallet Address</label>
-            <input type="text" id="withdrawAccount" class="input-control" placeholder="03001234567 or Tron address" required />
+          <div style="margin-bottom:0.8rem;">
+            <label class="text-xs text-muted">Account Number / Wallet</label>
+            <input type="text" id="wthAccount" class="input-control" placeholder="0300... or Tron Address" required />
           </div>
-          <div class="form-group">
-            <label>Withdrawal Amount ($ USD)</label>
-            <input type="number" id="withdrawAmount" class="input-control" min="5" step="0.01" placeholder="Minimum $5.00" required />
-            <div class="flex-between text-xs mt-1 text-muted">
-              <span>Available Balance: <strong id="withdrawableBalanceSpan" class="text-emerald">$0.00</strong></span>
-              <span>Fee: 0%</span>
-            </div>
+          <div style="margin-bottom:0.8rem;">
+            <label class="text-xs text-muted">Amount ($)</label>
+            <input type="number" id="wthAmount" class="input-control" min="5" placeholder="Min $5" required />
           </div>
-          <button type="submit" class="btn btn-cyan w-full mt-4">
-            <i class="fa-solid fa-money-bill-transfer"></i> Confirm Payout
-          </button>
+          <button type="submit" class="btn btn-cyan w-full mt-2">Confirm Withdrawal</button>
         </form>
       </div>
     </section>
 
-    <!-- VIEW 6: COMPREHENSIVE MASTER ADMIN CONSOLE -->
-    <section id="view-admin" class="content-view">
-      <div class="dashboard-header glass-panel" style="border-left: 4px solid #f59e0b;">
+    <!-- VIEW 6: MASTER ADMIN -->
+    <section id="view-admin" class="view-panel">
+      <div class="glass p-4 flex-between" style="border-left: 4px solid var(--amber);">
         <div>
-          <h2><i class="fa-solid fa-crown text-amber"></i> Master Control Panel</h2>
-          <span class="text-xs text-cyan">Admin Dashboard: Live Control on Balances, Packages, Deposits & Withdrawals</span>
+          <h2><i class="fa-solid fa-crown text-amber"></i> Master Admin Center</h2>
+          <span class="text-xs text-cyan">Live Management: Users, Balance, Deposits, Withdrawals & Packages</span>
         </div>
-        <button class="btn btn-sm btn-outline-danger" onclick="exitAdminView()">Exit Admin</button>
+        <button class="btn btn-danger btn-sm" onclick="goView('dashboard')">Exit Admin</button>
       </div>
 
-      <!-- Global Platform Statistics -->
-      <div class="stats-grid mt-4">
-        <div class="stat-card glass-panel">
-          <div class="stat-title">Total Users</div>
-          <div class="stat-value text-cyan" id="admTotalUsers">0</div>
-        </div>
-        <div class="stat-card glass-panel">
-          <div class="stat-title">Approved Deposits</div>
-          <div class="stat-value text-emerald" id="admTotalDeposits">$0.00</div>
-        </div>
-        <div class="stat-card glass-panel">
-          <div class="stat-title">Pending Withdrawals</div>
-          <div class="stat-value text-amber" id="admPendingWithdrawals">$0.00</div>
-        </div>
-        <div class="stat-card glass-panel">
-          <div class="stat-title">Active Ads</div>
-          <div class="stat-value text-purple" id="admTotalAds">0</div>
-        </div>
+      <!-- Admin Tabs -->
+      <div style="display:flex; gap:0.5rem; margin-top:1rem; flex-wrap:wrap;">
+        <button class="btn btn-sm btn-cyan" onclick="adminTab('users')">Users & Balance</button>
+        <button class="btn btn-sm btn-emerald" onclick="adminTab('deposits')">Deposit Queue</button>
+        <button class="btn btn-sm btn-amber" onclick="adminTab('withdrawals')">Withdrawal Queue</button>
+        <button class="btn btn-sm btn-cyan" onclick="adminTab('packages')">Packages</button>
+        <button class="btn btn-sm btn-emerald" onclick="adminTab('ads')">PTC Ads</button>
       </div>
 
-      <!-- Admin Navigation Tabs -->
-      <div class="flex-between mt-6" style="gap: 0.5rem; justify-content: flex-start; flex-wrap: wrap;">
-        <button class="btn btn-sm btn-cyan tab-btn active" onclick="switchAdminTab('users')"><i class="fa-solid fa-users"></i> Users & Balance</button>
-        <button class="btn btn-sm btn-emerald tab-btn" onclick="switchAdminTab('deposits')"><i class="fa-solid fa-inbox"></i> Deposits Queue</button>
-        <button class="btn btn-sm tab-btn" style="background:#f59e0b; color:black;" onclick="switchAdminTab('withdrawals')"><i class="fa-solid fa-hand-holding-dollar"></i> Withdrawals Queue</button>
-        <button class="btn btn-sm tab-btn" style="background:#06b6d4; color:black;" onclick="switchAdminTab('packages')"><i class="fa-solid fa-gem"></i> Packages Manager</button>
-        <button class="btn btn-sm tab-btn" style="background:#a855f7; color:white;" onclick="switchAdminTab('ads')"><i class="fa-solid fa-bullhorn"></i> PTC Ads Manager</button>
-      </div>
-
-      <!-- Tab 1: Users & Balance Control -->
-      <div id="adm-tab-users" class="admin-tab-content active glass-panel mt-4 p-4">
-        <div class="flex-between mb-3">
-          <h3>Users Account & Direct Balance Control</h3>
-          <span class="text-xs text-muted">Click "Edit Balance" to credit or debit any user</span>
-        </div>
-        <div class="table-responsive">
+      <!-- Admin Tab: Users -->
+      <div id="adm-users" class="glass p-4 mt-4 adm-sub active">
+        <h3>User Accounts & Balance Control</h3>
+        <div class="table-wrap mt-2">
           <table class="table">
-            <thead>
-              <tr><th>Email</th><th>Status</th><th>Balance</th><th>Active Plan</th><th>Actions</th></tr>
-            </thead>
-            <tbody id="admUsersTableBody"></tbody>
+            <thead><tr><th>Email</th><th>Status</th><th>Balance</th><th>Tier</th><th>Action</th></tr></thead>
+            <tbody id="admUsersBody"></tbody>
           </table>
         </div>
       </div>
 
-      <!-- Tab 2: Deposit Approvals -->
-      <div id="adm-tab-deposits" class="admin-tab-content glass-panel mt-4 p-4" style="display:none;">
-        <h3>Pending Deposit Verifications</h3>
-        <p class="text-xs text-muted">Approve credits user balance immediately. Reject marks the deposit cancelled.</p>
-        <div class="table-responsive mt-3">
+      <!-- Admin Tab: Deposits -->
+      <div id="adm-deposits" class="glass p-4 mt-4 adm-sub" style="display:none;">
+        <h3>Pending Deposits</h3>
+        <div class="table-wrap mt-2">
           <table class="table">
-            <thead>
-              <tr><th>User</th><th>Gateway</th><th>TID / Proof</th><th>Amount</th><th>Date</th><th>Action</th></tr>
-            </thead>
-            <tbody id="admDepositsTableBody"></tbody>
+            <thead><tr><th>User</th><th>Gateway</th><th>TID</th><th>Amount</th><th>Action</th></tr></thead>
+            <tbody id="admDepositsBody"></tbody>
           </table>
         </div>
       </div>
 
-      <!-- Tab 3: Withdrawal Approvals -->
-      <div id="adm-tab-withdrawals" class="admin-tab-content glass-panel mt-4 p-4" style="display:none;">
-        <h3>Pending Withdrawal Requests</h3>
-        <p class="text-xs text-muted">Reject will automatically REFUND the amount back to user's available balance.</p>
-        <div class="table-responsive mt-3">
+      <!-- Admin Tab: Withdrawals -->
+      <div id="adm-withdrawals" class="glass p-4 mt-4 adm-sub" style="display:none;">
+        <h3>Pending Withdrawals</h3>
+        <div class="table-wrap mt-2">
           <table class="table">
-            <thead>
-              <tr><th>User</th><th>Method & Account</th><th>Amount</th><th>Date</th><th>Action</th></tr>
-            </thead>
-            <tbody id="admWithdrawalsTableBody"></tbody>
+            <thead><tr><th>User</th><th>Account</th><th>Amount</th><th>Action</th></tr></thead>
+            <tbody id="admWithdrawalsBody"></tbody>
           </table>
         </div>
       </div>
 
-      <!-- Tab 4: Packages & Pricing Manager -->
-      <div id="adm-tab-packages" class="admin-tab-content glass-panel mt-4 p-4" style="display:none;">
-        <h3>Package Pricing & Ad Limits Configuration</h3>
-        <p class="text-xs text-muted">Change package prices, daily ad limits, and reward rates directly:</p>
-        <div class="table-responsive mt-3">
+      <!-- Admin Tab: Packages -->
+      <div id="adm-packages" class="glass p-4 mt-4 adm-sub" style="display:none;">
+        <h3>Package Pricing & Limits</h3>
+        <div class="table-wrap mt-2">
           <table class="table">
-            <thead>
-              <tr><th>Package Name</th><th>Price ($)</th><th>Daily Ads</th><th>Reward/Ad ($)</th><th>ROI Info</th><th>Save Changes</th></tr>
-            </thead>
-            <tbody id="admPackagesTableBody"></tbody>
+            <thead><tr><th>Name</th><th>Price ($)</th><th>Daily Ads</th><th>Action</th></tr></thead>
+            <tbody id="admPackagesBody"></tbody>
           </table>
         </div>
       </div>
 
-      <!-- Tab 5: PTC Ads Manager -->
-      <div id="adm-tab-ads" class="admin-tab-content glass-panel mt-4 p-4" style="display:none;">
-        <h3>Create New PTC Advertisement</h3>
-        <form id="newAdForm" onsubmit="handleCreateAdSubmit(event)" class="mt-3" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-          <div class="form-group">
-            <label>Ad Title</label>
-            <input type="text" id="newAdTitle" class="input-control" placeholder="e.g. Binance Staking" required />
-          </div>
-          <div class="form-group">
-            <label>Reward ($)</label>
-            <input type="number" step="0.01" id="newAdReward" class="input-control" placeholder="0.05" required />
-          </div>
-          <div class="form-group">
-            <label>Duration (Seconds)</label>
-            <input type="number" id="newAdDuration" class="input-control" placeholder="10" required />
-          </div>
-          <div class="form-group">
-            <label>Target URL</label>
-            <input type="url" id="newAdUrl" class="input-control" placeholder="https://..." required />
-          </div>
-          <div style="grid-column: 1 / -1;">
-            <button type="submit" class="btn btn-emerald"><i class="fa-solid fa-plus"></i> Publish New Ad</button>
-          </div>
+      <!-- Admin Tab: Ads -->
+      <div id="adm-ads" class="glass p-4 mt-4 adm-sub" style="display:none;">
+        <h3>Add New PTC Ad</h3>
+        <form onsubmit="onAddAd(event)" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:0.5rem; margin-top:0.5rem;">
+          <input type="text" id="adTitle" placeholder="Title" class="input-control" required />
+          <input type="number" id="adReward" step="0.01" placeholder="Reward ($)" class="input-control" required />
+          <input type="number" id="adDuration" placeholder="Duration (s)" class="input-control" required />
+          <button type="submit" class="btn btn-emerald">Publish Ad</button>
         </form>
-
-        <h3 class="mt-6">Existing Active Ads</h3>
-        <div class="table-responsive mt-2">
+        <h4 class="mt-4">Active Ads</h4>
+        <div class="table-wrap mt-2">
           <table class="table">
-            <thead>
-              <tr><th>Title</th><th>Reward</th><th>Duration</th><th>Action</th></tr>
-            </thead>
-            <tbody id="admAdsTableBody"></tbody>
+            <thead><tr><th>Title</th><th>Reward</th><th>Duration</th><th>Action</th></tr></thead>
+            <tbody id="admAdsBody"></tbody>
           </table>
         </div>
       </div>
@@ -320,67 +319,42 @@
 
   </main>
 
-  <!-- MODAL: BALANCE EDIT POPUP -->
-  <div id="editBalanceModal" class="modal-overlay">
-    <div class="auth-modal-card glass-panel">
-      <div class="flex-between">
-        <h3>Adjust User Balance</h3>
-        <button class="close-modal-btn" onclick="closeEditBalanceModal()">&times;</button>
-      </div>
-      <p class="text-xs text-muted mt-1" id="editBalanceUserLabel">Adjusting user balance...</p>
-      
-      <form onsubmit="handleEditBalanceSubmit(event)" class="mt-4">
-        <input type="hidden" id="editBalanceUserEmail" />
-        <div class="form-group">
-          <label>Set Exact New Balance ($ USD)</label>
-          <input type="number" step="0.01" id="editBalanceInput" class="input-control" required />
-        </div>
-        <button type="submit" class="btn btn-emerald w-full mt-3">Save Balance</button>
-      </form>
-    </div>
-  </div>
-
-  <!-- MODAL: PTC AD VIEWER WITH PROGRESS & CAPTCHA -->
-  <div id="adModal" class="modal-overlay">
-    <div class="ad-modal-card glass-panel">
+  <!-- PTC Watch Ad Modal -->
+  <div id="adModal" class="modal" style="display:none;">
+    <div class="glass modal-box">
       <div class="flex-between">
         <h3 id="adModalTitle">Watching Ad</h3>
-        <span class="timer-countdown" id="adTimerNum">10s</span>
+        <span class="text-cyan font-bold text-lg" id="adTimer">10s</span>
       </div>
-      <div class="ad-progress-bar-container mt-2">
-        <div id="adProgressBar" class="ad-progress-fill"></div>
+      <div style="background:rgba(255,255,255,0.1); height:8px; border-radius:99px; margin-top:1rem; overflow:hidden;">
+        <div id="adProgress" style="background:var(--emerald); height:100%; width:0%;"></div>
       </div>
-      <div class="ad-frame-wrapper mt-3">
-        <p class="text-muted">Stay on this screen until the progress bar completes, then solve the anti-bot math question below to claim your reward.</p>
-      </div>
-      <div id="captchaSection" class="captcha-box hidden mt-3">
-        <span id="captchaMathQuestion" class="captcha-math-badge">5 + 3 = ?</span>
-        <input type="number" id="captchaUserAnswer" class="input-control" placeholder="Answer" style="max-width:120px;" />
-        <button type="button" class="btn btn-emerald" onclick="submitCaptchaValidation()">Claim Reward</button>
+      <div id="adCaptchaBox" style="display:none; margin-top:1.5rem; background:rgba(16,185,129,0.1); padding:1rem; border-radius:8px;">
+        <p class="text-xs text-muted">Solve math captcha to claim reward:</p>
+        <div style="display:flex; gap:0.5rem; align-items:center; margin-top:0.5rem;">
+          <strong class="text-emerald" id="captchaQ">5 + 2 = ?</strong>
+          <input type="number" id="captchaA" class="input-control" style="max-width:100px;" />
+          <button class="btn btn-emerald" onclick="verifyCaptcha()">Claim</button>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- MODAL: MASTER ADMIN PIN (Ctrl+Shift+A) -->
-  <div id="adminPinModal" class="modal-overlay">
-    <div class="auth-modal-card glass-panel text-center">
-      <h3>Master Admin Keyhole</h3>
-      <p class="text-xs text-muted mt-1">Default PIN: 778899</p>
-      <form onsubmit="handleAdminPinSubmit(event)" class="mt-4">
-        <input type="password" id="masterAdminPin" class="input-control text-center text-lg" placeholder="PIN" required />
-        <button type="submit" class="btn btn-cyan w-full mt-3">Unlock Console</button>
-      </form>
+  <!-- Edit User Balance Modal -->
+  <div id="balModal" class="modal" style="display:none;">
+    <div class="glass modal-box">
+      <h3>Set Exact Balance</h3>
+      <p class="text-xs text-muted mt-2" id="balTargetEmail"></p>
+      <input type="number" step="0.01" id="balNewAmount" class="input-control mt-4" required />
+      <div style="display:flex; gap:0.5rem; margin-top:1rem;">
+        <button class="btn btn-emerald w-full" onclick="saveNewBalance()">Save</button>
+        <button class="btn btn-danger w-full" onclick="closeBalModal()">Cancel</button>
+      </div>
     </div>
   </div>
 
-  <!-- Footer with Hidden 5x Tap Trigger -->
-  <footer class="footer glass-panel mt-12">
-    <div class="nav-container flex-between">
-      <p>&copy; <span id="currentYear"></span> NexusPay Financial Technologies.</p>
-      <span class="secret-trigger" onclick="handleSecretFooterClick()">
-        <i class="fa-solid fa-shield"></i> System Operational
-      </span>
-    </div>
+  <footer class="glass" style="margin-top:auto; padding:1rem; text-align:center; font-size:0.75rem; color:var(--muted); border-radius:0;">
+    &copy; 2026 NexusPay. All rights reserved.
   </footer>
 
   <script src="app.js"></script>
